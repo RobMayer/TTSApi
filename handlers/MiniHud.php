@@ -139,7 +139,7 @@ namespace handlers {
             	if mode=='0' then
             		rebuildAssets()
             		Wait.frames(rebuildUI,".($input['REFRESH'] ?? $DEFAULT_REFRESH).")\n";
-            		if ($input['MODULE_GEOMETRY']) { $res .= "if (geometry_reload) then reloadGeometry() end\n"; }
+            		if ($input['MODULE_GEOMETRY']) { $res .= "if (geometry_reload) then spawnGeometry() end\n"; }
             	$res .= " else
             		rebuildUI()
             	end
@@ -280,11 +280,12 @@ namespace handlers {
             					b.sticky=false
             					b.interactable=false
             					b.setLock(true)
+                                b.setLuaScript('function onLoad() Wait.condition(function() self.getComponent(\'BoxCollider\').set(\'enabled\',false) end, function() return not(self.loading_custom) end) end ')
             				end
             			})
             			move_obj.setCustomObject({
             				mesh='https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/components/arcs/round0.obj',
-            				collider='https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/utility/null_COL.obj',
+            				collider='',
             				material=3,
             				specularIntensity=0,
             				cast_shadows=false
@@ -423,9 +424,11 @@ namespace handlers {
             	                        (tonumber(string.sub(clr, 5, 6),16) or 255) / 255,
             	                    })
             	                end
-                                (obj.getComponent('MeshRenderer') or obj.getComponent('BoxCollider')).set('enabled',false)
             	                obj.setVar('parent', self)
-            	                obj.setLuaScript('function onUpdate() if (parent ~= nil) then if (not parent.resting) then self.setPosition(parent.getPosition()) self.setRotation(parent.getRotation()) self.setScale(parent.getScale()) end else self.destruct() end end')
+            	                obj.setLuaScript([[
+                                    function onLoad() Wait.condition(function() self.getComponent('BoxCollider').set('enabled',false) end, function() return not(self.loading_custom) end) end
+                                    function onUpdate() if (parent ~= nil) then if (not parent.resting) then self.setPosition(parent.getPosition()) self.setRotation(parent.getRotation()) self.setScale(parent.getScale()) end else self.destruct() end end
+                                ]])
             	                obj.mass = 0
             	                obj.bounciness = 0
             	                obj.drag = 0
@@ -442,7 +445,7 @@ namespace handlers {
             	            mesh = state.geometry.mesh or '',
             	            diffuse = state.geometry.texture or '',
             	            normal = state.geometry.normal or '',
-            	            collider = 'https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/utility/null_COL.obj',
+            	            collider = '',
             	            type = 0,
             	            material = state.geometry.material or 0,
             	        })
@@ -487,39 +490,6 @@ namespace handlers {
             	    state.geometry.color='inherit';
             	    if (geo_obj ~= nil) then geo_obj.destruct(); end;
             	end\n";
-            	$res .= "function reloadGeometry()
-                    if (geo_obj ~= nil) then
-                        if (state.geometry.mesh ~= nil and state.geometry.mesh ~= '') then
-                            if (string.lower(state.geometry.color or 'INHERIT') == 'inherit') then
-                                geo_obj.setColorTint(self.getColorTint())
-                            else
-                                local clr = string.sub(state.geometry.color, 2, 7) or 'ffffff'
-                                if (string.len(clr) ~= 6) then clr = 'ffffff' end
-                                geo_obj.setColorTint({
-                                    (tonumber(string.sub(clr, 1, 2),16) or 255) / 255,
-                                    (tonumber(string.sub(clr, 3, 4),16) or 255) / 255,
-                                    (tonumber(string.sub(clr, 5, 6),16) or 255) / 255,
-                                })
-                            end
-                            geo_obj.setCustomObject({
-                                mesh = state.geometry.mesh or '',
-                    			diffuse = state.geometry.texture or '',
-                    			normal = state.geometry.normal or '',
-                    			collider = 'https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/utility/null_COL.obj',
-                    			type = 0,
-                    			material = state.geometry.material or 0,
-                            })
-                            geo_obj.reload()
-                        else
-                            geo_obj.destruct();
-                        end
-                        geometry_reload=false;
-                    else
-                        spawnGeometry()
-                        geometry_reload=false;
-                    end
-                end;\n";
-
             	$res .= "function ui_editgeometry(player, val, id)
             		local args = {}
             	    for a in string.gmatch(id, '([^%_]+)') do
@@ -545,7 +515,6 @@ namespace handlers {
             } else {
             	$res .= "function editGeometry(a) end;\n";
             	$res .= "function clearGeometry() end;\n";
-            	$res .= "function reloadGeometry() end;\n";
             }
 
             if ($input['MODULE_ARC']) {
@@ -590,7 +559,7 @@ namespace handlers {
             			callback_function=function(b)
             				b.setColorTint(clr)
             				b.setVar('parent',self)
-            				b.setLuaScript('function onUpdate() if (parent ~= nil) then if (not parent.resting) then self.setPosition(parent.getPosition()) self.setRotation(parent.getRotation()) end else self.destruct() end end')
+            				b.setLuaScript('function onLoad() Wait.condition(function() self.getComponent(\'BoxCollider\').set(\'enabled\',false) end, function() return not(self.loading_custom) end) end function onUpdate() if (parent ~= nil) then if (not parent.resting) then self.setPosition(parent.getPosition()) self.setRotation(parent.getRotation()) end else self.destruct() end end')
             				b.getComponent('MeshRenderer').set('receiveShadows',false)
             				b.mass=0
             				b.bounciness=0
@@ -606,7 +575,7 @@ namespace handlers {
             		})
             		arc_obj.setCustomObject({
             			mesh='".$input['ARCS']['MESH']."',
-            			collider='https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/utility/null_COL.obj',
+            			collider='',
             			material=3,
             			specularIntensity=0,
             			cast_shadows=false
@@ -1081,7 +1050,6 @@ namespace handlers {
             $res .= "function rebuildUI()\n";
 
         	$res .= "local w = ".max(100, $input['OVERHEAD_WIDTH'] / ($input['UI_SCALE']) * 100)."; local orient = '".$input['OVERHEAD_ORIENT']."';\n";
-
         	//Main Buttons
         	$res .= "local mainButtons = {};\n";
         	$res .= "local mainButtonX = 20;\n";
