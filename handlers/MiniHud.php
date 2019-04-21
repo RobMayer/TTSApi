@@ -628,7 +628,7 @@ namespace handlers {
             			(tonumber(string.sub(tmp, 5, 6),16) or 255) / 255,
             		}\n";
             	}
-            	echo" arc_obj=spawnObject({
+            	$res .= " arc_obj=spawnObject({
             			type='custom_model',
             			position=self.getPosition(),
             			rotation=self.getRotation(),
