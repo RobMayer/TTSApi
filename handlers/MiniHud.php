@@ -620,7 +620,7 @@ namespace handlers {
             	if (strtolower($input['ARCS']['COLOR']) == "inherit") {
             		$res .= "local clr = self.getColorTint()\n";
             	} else {
-            		$res .= "local tmp = string.sub(".$input['ARCS']['COLOR'].", 2, 7) or 'ffffff'
+            		$res .= "local tmp = string.sub('".$input['ARCS']['COLOR']."', 2, 7) or 'ffffff'
             		if (string.len(tmp) ~= 6) then tmp = 'ffffff' end
             		local clr = {
             			(tonumber(string.sub(tmp, 1, 2),16) or 255) / 255,
