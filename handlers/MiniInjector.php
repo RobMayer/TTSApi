@@ -1677,6 +1677,8 @@ function checkForUpdate()
                     TRH_Version_Next = result.new
                 else
                     needsUpdate = const.UPTODATE
+                    TRH_Version = result.current
+                    TRH_Version_Next = result.new
                 end
                 if (ui_mode == 'SETTINGS') then
                     rebuildUI()
