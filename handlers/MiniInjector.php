@@ -5,7 +5,8 @@ namespace handlers {
         public function build() {
             return "--ThatRobHuman MiniHUDInjector
             TRH_Class = 'mini.injector'
-            TRH_Version = '".\UTILITY_VERSIONS['mini.injector']."'
+            local TRH_Version = '".\UTILITY_VERSIONS['mini.injector']."'
+            local TRH_Version_Next = '???'
             local TRH_Meta = '".\lib\VersionManager::token('mini.injector')."'
             local const = { SPECTATOR = 1, PLAYER = 2, PROMOTED = 4, BLACK = 8, HOST = 16, ALL = 31, NOSPECTATOR = 30, OFF = 0, INCREMENTAL = 1, STATIC = 2, BRACKETS = 3, SIMPLEGAUGE = 1, RADIUS = 2, COMPLEXGAUGE = 3, DEFINED = 4, PLASTIC = 0, WOOD = 1, METAL = 2, CARDBOARD = 3, UNKNOWN = 0, UPDATENEEDED = 1, UPTODATE = 2, BADCONNECT = 3}
 
@@ -1635,7 +1636,8 @@ function rebuildUI()
                     }},
                     {tag='VerticalLayout', attributes={spacing='5', flexibleHeight=0, padding='5 5 5 5', color='black'}, children={
                         {tag='Text', attributes={alignment='UpperMiddle', fontSize='24', text='Updates'}},
-                        {tag='Text', attributes={text='Version: '..TRH_Version}},
+                        {tag='Text', attributes={text='Current Version: '..TRH_Version}},
+                        {tag='Text', attributes={text='Next Version: '..TRH_Version_Next}},
                         updateStatusDisplay,
                         {tag='HorizontalLayout', attributes={}, children={
                             {tag='Button', attributes={onClick='ui_system_checkupdate', text='Check for Update'}},
@@ -1671,6 +1673,8 @@ function checkForUpdate()
                         print('[0088ff]Please be sure to update[-]')
                     end
                     needsUpdate = const.NEEDSUPDATE
+                    TRH_Version = result.current
+                    TRH_Version_Next = result.new
                 else
                     needsUpdate = const.UPTODATE
                 end
