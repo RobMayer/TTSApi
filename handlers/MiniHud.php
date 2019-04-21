@@ -423,6 +423,7 @@ namespace handlers {
             	                        (tonumber(string.sub(clr, 5, 6),16) or 255) / 255,
             	                    })
             	                end
+                                (obj.getComponent('MeshCollider') or obj.getComponent('BoxCollider')).set('enabled', false)
             	                obj.setVar('parent', self)
             	                obj.setLuaScript('function onUpdate() if (parent ~= nil) then if (not parent.resting) then self.setPosition(parent.getPosition()) self.setRotation(parent.getRotation()) self.setScale(parent.getScale()) end else self.destruct() end end')
             	                obj.mass = 0
@@ -441,7 +442,7 @@ namespace handlers {
             	            mesh = state.geometry.mesh or '',
             	            diffuse = state.geometry.texture or '',
             	            normal = state.geometry.normal or '',
-            	            collider = 'https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/utility/null_COL.obj',
+            	            collider = '',
             	            type = 0,
             	            material = state.geometry.material or 0,
             	        })
@@ -921,8 +922,8 @@ namespace handlers {
             			data.color or '#ffffff',
             			cur,
             			max,
-            			data.big or false,
-            			data.text or false
+            			data.text or false,
+                        data.big or false,
             		})
             	end\n";
             	$res .= "function getBars()
@@ -941,8 +942,8 @@ namespace handlers {
             	            color = v[2],
             	            current = v[3],
             	            maximum = v[4],
-            	            big = isBig,
-            	            text = hasText
+            	            text = hasText,
+                            big = isBig,
             	        }
             	    end
             	    return res
@@ -956,17 +957,17 @@ namespace handlers {
             	    local color = data.color or bar[2]
             	    local isBig = false
             	    local hasText = false
-            	    if (bar[5] ~= nil) then
-            	        isBig = bar[5]
-            	    end
-            	    if (data.big ~= nil) then
-            	        isBig = data.big
-            	    end
-            	    if (bar[6] ~= nil) then
-            	        hasText = bar[6]
+                    if (bar[5] ~= nil) then
+            	        hasText = bar[5]
             	    end
             	    if (data.text ~= nil) then
             	        hasText = data.text
+            	    end
+            	    if (bar[6] ~= nil) then
+            	        isBig = bar[6]
+            	    end
+            	    if (data.big ~= nil) then
+            	        isBig = data.big
             	    end
 
             	    local per = (max == 0) and 0 or cur / max * 100
@@ -975,8 +976,8 @@ namespace handlers {
             	    self.UI.setAttribute('inp_bar_'..index..'_color', 'value', color)
             	    self.UI.setAttribute('inp_bar_'..index..'_current', 'value', cur)
             	    self.UI.setAttribute('inp_bar_'..index..'_max', 'value', max)
+                    self.UI.setAttribute('inp_bar_'..index..'_text', 'isOn', hasText)
             	    self.UI.setAttribute('inp_bar_'..index..'_big', 'isOn', isBig)
-            	    self.UI.setAttribute('inp_bar_'..index..'_text', 'isOn', hasText)
 
             	    self.UI.setAttribute('bar_'..index, 'percentage', per)
             	    self.UI.setAttribute('bar_'..index, 'fillImageColor', color)
@@ -988,8 +989,8 @@ namespace handlers {
             	    state.bars[index][2] = color
             	    state.bars[index][3] = cur
             	    state.bars[index][4] = max
-            	    state.bars[index][5] = isBig
-            	    state.bars[index][6] = hasText
+                    state.bars[index][5] = hasText
+            	    state.bars[index][6] = isBig
             	end\n";
             	$res .= "function adjustBar(data)
             	    local index = tonumber(data.index) or error('index must numeric')
@@ -1258,19 +1259,19 @@ namespace handlers {
         			{tag='Cell',children={{tag='Text',attributes={color='#cccccc',text='Color'}}}},
         			{tag='Cell',children={{tag='Text',attributes={color='#cccccc',text='Current'}}}},
         			{tag='Cell',children={{tag='Text',attributes={color='#cccccc',text='Max'}}}},
-        			{tag='Cell',children={{tag='Text',attributes={color='#cccccc',text='Big'}}}},
-        			{tag='Cell',children={{tag='Text',attributes={color='#cccccc',text='Text'}}}}
+        			{tag='Cell',children={{tag='Text',attributes={color='#cccccc',text='Text'}}}},
+                    {tag='Cell',children={{tag='Text',attributes={color='#cccccc',text='Big'}}}},
         		}}}
         		for i,bar in pairs(state.bars) do
-        			local per = bar[3] / bar[4]
+        			local per = ((bar[4] == 0) and 0 or (bar[3] / bar[4] * 100))
         			table.insert(mainlist_bars,
-        	        {tag='horizontallayout', attributes={id='bar_container_'..i,minHeight=bar[5]and 30 or 15,childForceExpandWidth=false,childForceExpandHeight=false,childAlignment='MiddleCenter'},
+        	        {tag='horizontallayout', attributes={id='bar_container_'..i,minHeight=bar[6]and 30 or 15,childForceExpandWidth=false,childForceExpandHeight=false,childAlignment='MiddleCenter'},
         	            children={
         	                {tag='button', attributes={preferredHeight='20',preferredWidth='20',flexibleWidth='0',image='ui_minus',colors='#ccccccff|#ffffffff|#404040ff|#808080ff',onClick='ui_adjbar('..i..'|-1)',visibility=PERMEDIT} },
         	                {tag='panel', attributes={flexibleWidth='1',flexibleHeight='1'},
         	                    children={
         	                        {tag='progressbar', attributes={width='100%',height='100%',id='bar_'..i,color='#00000080',fillImageColor=bar[2],percentage=per,textColor='transparent'} },
-        	                        {tag='text', attributes={id='bar_'..i..'_text',text=bar[3]..' / '..bar[4],active=bar[6]or false,color='#ffffff',fontStyle='Bold',outline='#000000',outlineSize='1 1'} }
+        	                        {tag='text', attributes={id='bar_'..i..'_text',text=bar[3]..' / '..bar[4],active=bar[5]or false,color='#ffffff',fontStyle='Bold',outline='#000000',outlineSize='1 1'} }
         	                    }
         	                },
         	                {tag='button', attributes={preferredHeight='20',preferredWidth='20',flexibleWidth='0',image='ui_plus',colors='#ccccccff|#ffffffff|#404040ff|#808080ff',onClick='ui_adjbar('..i..'|1)',visibility=PERMEDIT} }
@@ -1283,8 +1284,8 @@ namespace handlers {
         			            {tag='Cell',children={{tag='InputField',attributes={id='inp_bar_'..i..'_color',onEndEdit='ui_editbar',text=bar[2]or'#ffffff'}}}},
         			            {tag='Cell',children={{tag='InputField',attributes={id='inp_bar_'..i..'_current',onEndEdit='ui_editbar',text=bar[3]or 10}}}},
         			            {tag='Cell',children={{tag='InputField',attributes={id='inp_bar_'..i..'_max',onEndEdit='ui_editbar',text=bar[4]or 10}}}},
-        			            {tag='Cell',children={{tag='Toggle',attributes={id='inp_bar_'..i..'_big',onValueChanged='ui_editbar',isOn=bar[5]or false}}}},
-        			            {tag='Cell',children={{tag='Toggle',attributes={id='inp_bar_'..i..'_text',onValueChanged='ui_editbar',isOn=bar[6]or false}}}},
+                                {tag='Cell',children={{tag='Toggle',attributes={id='inp_bar_'..i..'_text',onValueChanged='ui_editbar',isOn=bar[5]or false}}}},
+        			            {tag='Cell',children={{tag='Toggle',attributes={id='inp_bar_'..i..'_big',onValueChanged='ui_editbar',isOn=bar[6]or false}}}},
         			            {tag='Cell',children={{tag='Button',attributes={onClick='ui_removebar('..i..')',image='ui_close',colors='#cccccc|#ffffff|#808080'}}}}
         			        }
         			    })
