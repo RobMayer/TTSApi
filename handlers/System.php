@@ -3,6 +3,18 @@
 namespace handlers {
     class System {
 
+        public function deploy($input) {
+            if (isset($input['key'])) {
+                if ($input['key'] == \DEPLOY_KEY) {
+                    return ['result' => shell_exec("cd ".rtrim(\PATH_ROOT, "/")." && git pull 2>&1")];
+                } else {
+                    throw new \errors\NotAuthorized();
+                }
+            } else {
+                throw new \errors\NotFound();
+            }
+        }
+
         public function status() {
             return \TTS_MODE != "MAINT";
         }
