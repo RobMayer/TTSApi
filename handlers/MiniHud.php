@@ -423,7 +423,7 @@ namespace handlers {
             	                        (tonumber(string.sub(clr, 5, 6),16) or 255) / 255,
             	                    })
             	                end
-                                (obj.getComponent('MeshCollider') or obj.getComponent('BoxCollider')).set('enabled', false)
+                                (obj.getComponent('MeshRenderer') or obj.getComponent('BoxCollider')).set('enabled',false)
             	                obj.setVar('parent', self)
             	                obj.setLuaScript('function onUpdate() if (parent ~= nil) then if (not parent.resting) then self.setPosition(parent.getPosition()) self.setRotation(parent.getRotation()) self.setScale(parent.getScale()) end else self.destruct() end end')
             	                obj.mass = 0
@@ -442,7 +442,7 @@ namespace handlers {
             	            mesh = state.geometry.mesh or '',
             	            diffuse = state.geometry.texture or '',
             	            normal = state.geometry.normal or '',
-            	            collider = '',
+            	            collider = 'https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/utility/null_COL.obj',
             	            type = 0,
             	            material = state.geometry.material or 0,
             	        })
@@ -487,56 +487,6 @@ namespace handlers {
             	    state.geometry.color='inherit';
             	    if (geo_obj ~= nil) then geo_obj.destruct(); end;
             	end\n";
-                $res .= "function spawnGeometry()
-                	if (geo_obj ~= nil) then
-                		geo_obj.destruct()
-                	end
-                	if (state.geometry.mesh ~= nil and state.geometry.mesh ~= '') then
-                		geo_obj = spawnObject({
-                			type = 'custom_model',
-                			position = self.getPosition(),
-                			rotation = self.getRotation(),
-                			scale = self.getScale(),
-                			mass = 0,
-                			sound = false,
-                			snap_to_grid = false,
-                			callback_function = function(obj)
-                				if (string.lower(state.geometry.color or 'INHERIT') == 'inherit') then
-                					obj.setColorTint(self.getColorTint())
-                				else
-                					local clr = string.sub(state.geometry.color, 2, 7) or 'ffffff'
-                					if (string.len(clr) ~= 6) then clr = 'ffffff' end
-                					obj.setColorTint({
-                						(tonumber(string.sub(clr, 1, 2),16) or 255) / 255,
-                						(tonumber(string.sub(clr, 3, 4),16) or 255) / 255,
-                						(tonumber(string.sub(clr, 5, 6),16) or 255) / 255,
-                					})
-                				end
-                				obj.setVar('parent', self)
-                				obj.setLuaScript('function onUpdate() if (parent ~= nil) then if (not parent.resting) then self.setPosition(parent.getPosition()) self.setRotation(parent.getRotation()) self.setScale(parent.getScale()) end else self.destruct() end end')
-                				obj.mass = 0
-                				obj.bounciness = 0
-                				obj.drag = 0
-                				obj.use_snap_points = false
-                				obj.use_grid = false
-                				obj.use_gravity = false
-                				obj.auto_raise = false
-                				obj.auto_raise = false
-                				obj.sticky = false
-                				obj.interactable = false
-                			end,
-                		})
-                		geo_obj.setCustomObject({
-                			mesh = state.geometry.mesh or '',
-                			diffuse = state.geometry.texture or '',
-                			normal = state.geometry.normal or '',
-                			collider = 'https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/utility/null_COL.obj',
-                			type = 0,
-                			material = state.geometry.material or 0,
-                		})
-                        geometry_reload=false;
-                	end
-                end;\n";
             	$res .= "function reloadGeometry()
                     if (geo_obj ~= nil) then
                         if (state.geometry.mesh ~= nil and state.geometry.mesh ~= '') then
