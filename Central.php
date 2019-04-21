@@ -201,7 +201,9 @@ class Central {
             }
             http_response_code($status);
         } else {
-            if (!is_null(self::$payload)) {
+            if (!is_array(self::$payload) || !array_key_exists("result", self::$payload)) {
+                $response['result'] = self::$payload;
+            } else {
                 $response = self::$payload;
             }
         }

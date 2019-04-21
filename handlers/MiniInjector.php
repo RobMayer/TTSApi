@@ -1661,12 +1661,13 @@ function checkForUpdate()
             local response = JSON.decode(res.text)
             if (response.errors ~= nil) then
                 needsUpdate = const.BADCONNECT
-            else
-                if (response.update) then
+            elseif (response.result ~= nil) then
+                local result = response.result
+                if (result.update) then
                     if (currentconfig.META.AUTOUPDATE) then
                         installUpdate()
                     elseif (needsUpdate == const.UNKNOWN) then
-                        print('[ffcc33]There is a new version of The MiniHUD Injector available[-] ('..response.current..' -> '..response.new..')')
+                        print('[ffcc33]There is a new version of The MiniHUD Injector available[-] ('..result.current..' -> '..result.new..')')
                         print('[0088ff]Please be sure to update[-]')
                     end
                     needsUpdate = const.NEEDSUPDATE
@@ -1676,6 +1677,9 @@ function checkForUpdate()
                 if (ui_mode == 'SETTINGS') then
                     rebuildUI()
                 end
+            else
+                error('something went wrong with JSON parsing')
+                log(res.text)
             end
         else
             error(res)

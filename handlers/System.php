@@ -6,8 +6,10 @@ namespace handlers {
         public function deploy($input) {
             if (isset($input['key'])) {
                 if ($input['key'] == \DEPLOY_KEY) {
-                    shell_exec("cd ".rtrim(\PATH_ROOT, "/")." && git stash drop 2>&1");
-                    return ['result' => shell_exec("cd ".rtrim(\PATH_ROOT, "/")." && git pull 2>&1")];
+                    $res = [];
+                    $res[] = shell_exec("cd ".rtrim(\PATH_ROOT, "/")." && git reset --hard 2>&1");
+                    $res[] = shell_exec("cd ".rtrim(\PATH_ROOT, "/")." && git pull 2>&1");
+                    return $res;
                 } else {
                     throw new \errors\NotAuthorized();
                 }
