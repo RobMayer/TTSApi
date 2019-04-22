@@ -619,6 +619,10 @@ function ui_remarcbracket(player)
     rebuildUI()
 end
 
+function ui_arc_setcolor(player, value, id)
+    ui_editarc(player, value, 'inp_arc_color');
+end
+
 --FLAG
 
 function ui_editflag(player, val, id)
@@ -659,6 +663,12 @@ function ui_editflag(player, val, id)
             end
         end
     end
+end
+
+--Geometry
+
+function ui_flag_setcolor(player, val, id)
+    ui_editflag(player, val, 'inp_flag_color')
 end
 
 function ui_editgeometry(player, val, id)
@@ -838,6 +848,10 @@ function ui_editmovement(player, value, id)
             self.UI.setAttribute('inp_move_origin_center', 'isOn', false)
         end
     end
+end
+
+function ui_movement_setcolor(player, value, id)
+    ui_editmovement(player, value, 'inp_move_color')
 end
 
 function ui_movesegments_editsegment(player, value, id)
@@ -1243,10 +1257,6 @@ function rebuildUI()
                     }},
                     {tag='HorizontalLayout', attributes={spacing='5'}, children={
                         {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=300}, children={
-                            {tag='Text', attributes={text='Color'}},
-                            {tag='InputField', attributes={id='inp_arc_color', text=currentconfig.ARCS.COLOR, onEndEdit='ui_editarc'}},
-                        }},
-                        {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=300}, children={
                             {tag='Text', attributes={text='Scale Factor'}},
                             {tag='InputField', attributes={id='inp_arc_scale', text=currentconfig.ARCS.SCALE, onEndEdit='ui_editarc', characterValidation='Decimal'}},
                         }},
@@ -1258,7 +1268,26 @@ function rebuildUI()
                             {tag='Text', attributes={text='\'Zero\' radius'}},
                             {tag='InputField', attributes={id='inp_arc_zero', text=currentconfig.ARCS.ZERO, onEndEdit='ui_editarc', characterValidation='Decimal'}},
                         }},
-                    }}
+                    }},
+                    {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=400}, children={
+                        {tag='Text', attributes={text='Color'}},
+                        {tag='HorizontalLayout', attributes={flexibleWidth=0, preferredHeight='40', spacing=5, childForceExpandWidth = false}, children={
+                            {tag='InputField', attributes={id='inp_arc_color', text=currentconfig.ARCS.COLOR or 'inherit', flexibleWidth='1', onEndEdit='ui_editarc'}},
+                            {tag='Button', attributes={image='ui_share', preferredWidth='40', colors='White|White|#808080|#40404040', onClick='ui_arc_setcolor(inherit)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='White|White|#808080|#40404040', onClick='ui_arc_setcolor(#ffffff)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Brown|Brown|#808080|#40404040', onClick='ui_arc_setcolor(#713b17)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Red|Red|#808080|#40404040', onClick='ui_arc_setcolor(#da1918)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Orange|Orange|#808080|#40404040', onClick='ui_arc_setcolor(#f4641d)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Yellow|Yellow|#808080|#40404040', onClick='ui_arc_setcolor(#e7e52c)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Green|Green|#808080|#40404040', onClick='ui_arc_setcolor(#31b32b)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Teal|Teal|#808080|#40404040', onClick='ui_arc_setcolor(#21b19b)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Blue|Blue|#808080|#40404040', onClick='ui_arc_setcolor(#1f87ff)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Purple|Purple|#808080|#40404040', onClick='ui_arc_setcolor(#a020f0)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Pink|Pink|#808080|#40404040', onClick='ui_arc_setcolor(#f570ce)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_arc_setcolor(#aaaaaa)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_arc_setcolor(#191919)'}},
+                        }}
+                    }},
                 }}
             elseif (currentconfig.ARCS.MODE == const.STATIC) then
                 arcOptions = { tag='VerticalLayout', attributes={color='#404040', padding='10 10 10 10', spacing='5', childForceExpandHeight=false}, children={
@@ -1271,14 +1300,29 @@ function rebuildUI()
                     }},
                     {tag='HorizontalLayout', attributes={spacing='5'}, children={
                         {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=300}, children={
-                            {tag='Text', attributes={text='Color'}},
-                            {tag='InputField', attributes={id='inp_arc_color', text=currentconfig.ARCS.COLOR, onEndEdit='ui_editarc'}},
-                        }},
-                        {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=300}, children={
                             {tag='Text', attributes={text='Scale Factor'}},
                             {tag='InputField', attributes={id='inp_arc_scale', text=currentconfig.ARCS.SCALE, onEndEdit='ui_editarc', characterValidation='Decimal'}},
                         }},
-                    }}
+                    }},
+                    {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=400}, children={
+                        {tag='Text', attributes={text='Color'}},
+                        {tag='HorizontalLayout', attributes={flexibleWidth=0, preferredHeight='40', spacing=5, childForceExpandWidth = false}, children={
+                            {tag='InputField', attributes={id='inp_arc_color', text=currentconfig.ARCS.COLOR or 'inherit', flexibleWidth='1', onEndEdit='ui_editarc'}},
+                            {tag='Button', attributes={image='ui_share', preferredWidth='40', colors='White|White|#808080|#40404040', onClick='ui_arc_setcolor(inherit)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='White|White|#808080|#40404040', onClick='ui_arc_setcolor(#ffffff)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Brown|Brown|#808080|#40404040', onClick='ui_arc_setcolor(#713b17)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Red|Red|#808080|#40404040', onClick='ui_arc_setcolor(#da1918)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Orange|Orange|#808080|#40404040', onClick='ui_arc_setcolor(#f4641d)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Yellow|Yellow|#808080|#40404040', onClick='ui_arc_setcolor(#e7e52c)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Green|Green|#808080|#40404040', onClick='ui_arc_setcolor(#31b32b)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Teal|Teal|#808080|#40404040', onClick='ui_arc_setcolor(#21b19b)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Blue|Blue|#808080|#40404040', onClick='ui_arc_setcolor(#1f87ff)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Purple|Purple|#808080|#40404040', onClick='ui_arc_setcolor(#a020f0)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Pink|Pink|#808080|#40404040', onClick='ui_arc_setcolor(#f570ce)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_arc_setcolor(#aaaaaa)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_arc_setcolor(#191919)'}},
+                        }}
+                    }},
                 }}
             elseif (currentconfig.ARCS.MODE == const.BRACKETS) then
 
@@ -1300,10 +1344,6 @@ function rebuildUI()
                     }},
                     {tag='HorizontalLayout', attributes={spacing='5'}, children={
                         {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=300}, children={
-                            {tag='Text', attributes={text='Color'}},
-                            {tag='InputField', attributes={id='inp_arc_color', text=currentconfig.ARCS.COLOR, onEndEdit='ui_editarc'}},
-                        }},
-                        {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=300}, children={
                             {tag='Text', attributes={text='Scale Factor'}},
                             {tag='InputField', attributes={id='inp_arc_scale', text=currentconfig.ARCS.SCALE, onEndEdit='ui_editarc', characterValidation='Decimal'}},
                         }},
@@ -1311,6 +1351,25 @@ function rebuildUI()
                             {tag='Text', attributes={text='\'Zero\' radius'}},
                             {tag='InputField', attributes={id='inp_arc_zero', text=currentconfig.ARCS.ZERO, onEndEdit='ui_editarc', characterValidation='Decimal'}},
                         }},
+                    }},
+                    {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=400}, children={
+                        {tag='Text', attributes={text='Color'}},
+                        {tag='HorizontalLayout', attributes={flexibleWidth=0, preferredHeight='40', spacing=5, childForceExpandWidth = false}, children={
+                            {tag='InputField', attributes={id='inp_arc_color', text=currentconfig.ARCS.COLOR or 'inherit', flexibleWidth='1', onEndEdit='ui_editarc'}},
+                            {tag='Button', attributes={image='ui_share', preferredWidth='40', colors='White|White|#808080|#40404040', onClick='ui_arc_setcolor(inherit)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='White|White|#808080|#40404040', onClick='ui_arc_setcolor(#ffffff)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Brown|Brown|#808080|#40404040', onClick='ui_arc_setcolor(#713b17)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Red|Red|#808080|#40404040', onClick='ui_arc_setcolor(#da1918)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Orange|Orange|#808080|#40404040', onClick='ui_arc_setcolor(#f4641d)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Yellow|Yellow|#808080|#40404040', onClick='ui_arc_setcolor(#e7e52c)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Green|Green|#808080|#40404040', onClick='ui_arc_setcolor(#31b32b)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Teal|Teal|#808080|#40404040', onClick='ui_arc_setcolor(#21b19b)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Blue|Blue|#808080|#40404040', onClick='ui_arc_setcolor(#1f87ff)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Purple|Purple|#808080|#40404040', onClick='ui_arc_setcolor(#a020f0)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Pink|Pink|#808080|#40404040', onClick='ui_arc_setcolor(#f570ce)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_arc_setcolor(#aaaaaa)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_arc_setcolor(#191919)'}},
+                        }}
                     }},
                     {tag='HorizontalLayout', attributes={spacing='5'}, children={
                         {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=400}, children={
@@ -1367,10 +1426,6 @@ function rebuildUI()
                     }},
                     {tag='HorizontalLayout', attributes={spacing='5'}, children={
                         {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=200}, children={
-                            {tag='Text', attributes={text='Color'}},
-                            {tag='InputField', attributes={id='inp_flag_color', text=currentconfig.FLAG.COLOR or '', onEndEdit='ui_editflag'}},
-                        }},
-                        {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=200}, children={
                             {tag='Text', attributes={text='Width'}},
                             {tag='InputField', attributes={id='inp_flag_width', text=currentconfig.FLAG.WIDTH or 0, onEndEdit='ui_editflag', characterValidation='Decimal'}},
                         }},
@@ -1382,7 +1437,26 @@ function rebuildUI()
                             {tag='Text', attributes={text='Auto-on'}},
                             {tag='Button', attributes={minWidth=30, preferredHeight=30, preferredWidth=30, image=((currentconfig.FLAG.AUTOMODE or false) and 'ui_checkon' or 'ui_checkoff'), onClick='ui_editflag', id='inp_flag_automode'}},
                         }},
-                    }}
+                    }},
+                    {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=400}, children={
+                        {tag='Text', attributes={text='Color'}},
+                        {tag='HorizontalLayout', attributes={flexibleWidth=0, preferredHeight='40', spacing=5, childForceExpandWidth = false}, children={
+                            {tag='InputField', attributes={id='inp_flag_color', text=currentconfig.FLAG.COLOR or 'inherit', flexibleWidth='1', onEndEdit='ui_editflag'}},
+                            {tag='Button', attributes={image='ui_share', preferredWidth='40', colors='White|White|#808080|#40404040', onClick='ui_flag_setcolor(inherit)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='White|White|#808080|#40404040', onClick='ui_flag_setcolor(#ffffff)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Brown|Brown|#808080|#40404040', onClick='ui_flag_setcolor(#713b17)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Red|Red|#808080|#40404040', onClick='ui_flag_setcolor(#da1918)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Orange|Orange|#808080|#40404040', onClick='ui_flag_setcolor(#f4641d)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Yellow|Yellow|#808080|#40404040', onClick='ui_flag_setcolor(#e7e52c)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Green|Green|#808080|#40404040', onClick='ui_flag_setcolor(#31b32b)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Teal|Teal|#808080|#40404040', onClick='ui_flag_setcolor(#21b19b)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Blue|Blue|#808080|#40404040', onClick='ui_flag_setcolor(#1f87ff)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Purple|Purple|#808080|#40404040', onClick='ui_flag_setcolor(#a020f0)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Pink|Pink|#808080|#40404040', onClick='ui_flag_setcolor(#f570ce)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_flag_setcolor(#aaaaaa)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_flag_setcolor(#191919)'}},
+                        }}
+                    }},
                 }}
             }}
         end
@@ -1525,15 +1599,32 @@ function rebuildUI()
                             {tag='InputField', attributes={id='inp_move_speedmax', text=currentconfig.MOVEMENT.SPEEDMAX or '1', onEndEdit='ui_editmovement', characterValidation='Decimal'}},
                         }},
                         {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth = 1, childForceExpandHeight=false}, children={
-                            {tag='Text', attributes={text='Color'}},
-                            {tag='InputField', attributes={id='inp_move_color', text=currentconfig.MOVEMENT.COLOR or 'inherit', onEndEdit='ui_editmovement', characterValidation='Decimal'}},
                             {tag='Text', attributes={text='Origin'}},
                             {tag='HorizontalLayout', attributes={spacing='5'}, children={
                                 {tag='ToggleButton', attributes={id='inp_move_origin_center', onClick='ui_editmovement(CENTER)', text='Center', isOn=(currentconfig.MOVEMENT.ORIGIN == 'CENTER')}},
                                 {tag='ToggleButton', attributes={id='inp_move_origin_edge', onClick='ui_editmovement(EDGE)', text='Edge', isOn=(currentconfig.MOVEMENT.ORIGIN == 'EDGE')}},
                             }},
                         }},
-                    }}
+                    }},
+                    {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=400}, children={
+                        {tag='Text', attributes={text='Color'}},
+                        {tag='HorizontalLayout', attributes={flexibleWidth=0, preferredHeight='40', spacing=5, childForceExpandWidth = false}, children={
+                            {tag='InputField', attributes={id='inp_move_color', text=currentconfig.MOVEMENT.COLOR or 'inherit', flexibleWidth='1', onEndEdit='ui_editmovement'}},
+                            {tag='Button', attributes={image='ui_share', preferredWidth='40', colors='White|White|#808080|#40404040', onClick='ui_movement_setcolor(inherit)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='White|White|#808080|#40404040', onClick='ui_movement_setcolor(#ffffff)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Brown|Brown|#808080|#40404040', onClick='ui_movement_setcolor(#713b17)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Red|Red|#808080|#40404040', onClick='ui_movement_setcolor(#da1918)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Orange|Orange|#808080|#40404040', onClick='ui_movement_setcolor(#f4641d)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Yellow|Yellow|#808080|#40404040', onClick='ui_movement_setcolor(#e7e52c)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Green|Green|#808080|#40404040', onClick='ui_movement_setcolor(#31b32b)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Teal|Teal|#808080|#40404040', onClick='ui_movement_setcolor(#21b19b)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Blue|Blue|#808080|#40404040', onClick='ui_movement_setcolor(#1f87ff)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Purple|Purple|#808080|#40404040', onClick='ui_movement_setcolor(#a020f0)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Pink|Pink|#808080|#40404040', onClick='ui_movement_setcolor(#f570ce)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_movement_setcolor(#aaaaaa)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_movement_setcolor(#191919)'}},
+                        }}
+                    }},
                 }}
             elseif (currentconfig.MOVEMENT.MODE == const.DEFINED) then
                 local moveDefinitions = {

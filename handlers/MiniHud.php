@@ -1080,9 +1080,9 @@ namespace handlers {
         	if (($input['MODULE_FLAG'] && !$input['LOCK_FLAG']) || $input['MODULE_BARS'] || $input['MODULE_MARKERS'] || ($input['MODULE_GEOMETRY'] && !$input['LOCK_GEOMETRY'])) {
         		$theSettingsButton = "table.insert(mainButtons, {tag='button', attributes={height='30', width='30', rectAlignment='MiddleRight', image='ui_gear', offsetXY='-50 0', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', onClick='ui_setmode(0)', visibility=PERMEDIT}});\n";
         		if ($input['MODULE_GEOMETRY'] && !$input['LOCK_GEOMETRY']) { $theSettingsButton = "table.insert(mainButtons, {tag='button', attributes={height='30', width='30', rectAlignment='MiddleRight', image='ui_gear', offsetXY='-50 0', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', onClick='ui_setmode(geometry)', visibility=PERMEDIT}});\n"; }
-        		if ($input['MODULE_FLAG'] && !$input['LOCK_FLAG']) { $theSettingsButton = "table.insert(mainButtons, {tag='button', attributes={height='30', width='30', rectAlignment='MiddleRight', image='ui_gear', offsetXY='-50 0', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', onClick='ui_setmode(flag)', visibility=PERMEDIT}});\n"; }
         		if ($input['MODULE_BARS']) { $theSettingsButton = "table.insert(mainButtons, {tag='button', attributes={height='30', width='30', rectAlignment='MiddleRight', image='ui_gear', offsetXY='-50 0', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', onClick='ui_setmode(bars)', visibility=PERMEDIT}});\n"; }
         		if ($input['MODULE_MARKERS']) { $theSettingsButton = "table.insert(mainButtons, {tag='button', attributes={height='30', width='30', rectAlignment='MiddleRight', image='ui_gear', offsetXY='-50 0', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', onClick='ui_setmode(markers)', visibility=PERMEDIT}});\n"; }
+                if ($input['MODULE_FLAG'] && !$input['LOCK_FLAG']) { $theSettingsButton = "table.insert(mainButtons, {tag='button', attributes={height='30', width='30', rectAlignment='MiddleRight', image='ui_gear', offsetXY='-50 0', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', onClick='ui_setmode(flag)', visibility=PERMEDIT}});\n"; }
         		$res .= $theSettingsButton;
         	}
         	if ($input['MODULE_FLAG'] || $input['MODULE_MARKERS']) {
@@ -1099,7 +1099,7 @@ namespace handlers {
 
         	if ($input['MODULE_FLAG']) {
         		$res .= "local activeFlag = (state.flag.image ~= nil and state.flag.image ~= '' and state.flag.height ~= nil and state.flag.width ~= nil and state.flag.height > 0 and state.flag.width > 0);\n";
-        		$mainChildren[] = "(activeFlag and {tag='Panel', attributes={ id='flag_container', minHeight=(state.flag.height) * 100, active=(flag_active == true) }, children={ {tag='image', attributes={image='fl_image', width=((state.flag.width) * 100), color=state.flag.color or '#ffffff'}} } } or {})";
+        		$mainChildren[] = "(activeFlag and {tag='Panel', attributes={ id='flag_container', minHeight=(state.flag.height) * 100, active=(flag_active == true) }, children={ {tag='image', attributes={image='fl_image', width=((state.flag.width) * 100), color=state.flag.color or ''}} } } or {})";
 
         		if (!$input['LOCK_FLAG']) {
         			$settingsChildren[] = "{tag='panel',attributes={id='ui_settings_flag',offsetXY='0 40',height='400',rectAlignment='LowerCenter',color='black',active=ui_mode=='flag'},
@@ -1423,7 +1423,7 @@ namespace handlers {
         						children={
         							{tag='panel', attributes={visibility=PERMEDIT, rectAlignment='LowerCenter', width='120', height='80', offsetXY='0 -80'},
         								children={
-        									{tag='Button', attributes={image='ui_plus', width=(40), height=(40), onClick='ui_move_faster', active=(#move_speed < ".($input['MOVEMENT']['SPEEDMAX'])."), rectAlignment='UpperCenter'}},
+        									{tag='Button', attributes={image='ui_plus', width=(40), height=(40), onClick='ui_move_faster', active=(#move_speed < ".($input['MOVEMENT']['SPEEDMAX'] + 1)."), rectAlignment='UpperCenter'}},
         									{tag='Button', attributes={image='ui_minus', width=(40), height=(40), onClick='ui_move_slower', active=(#move_speed > 1), rectAlignment='LowerCenter'}},
         									{tag='Button', attributes={image='ui_block', color='#ff0000', width=(40), height=(40), onClick='ui_move_cancel', rectAlignment='MiddleLeft'}},
         									{tag='Button', attributes={image='ui_check', color='#00ff00', width=(40), height=(40), onClick='ui_move_commit', rectAlignment='MiddleRight'}},
@@ -1492,7 +1492,7 @@ namespace handlers {
         					{tag='panel', attributes={width=".($input['BASE_WIDTH']*100).", height=".($input['BASE_LENGTH']*100).", position='0 0 0', rotation='0 0 0'},
         						children={
         							{tag='panel', attributes={visibility=PERMEDIT, rectAlignment='LowerCenter', width='120', height='80', offsetXY='0 -80'}, children={
-        								{tag='Button', attributes={image='ui_plus', width=(40), height=(40), onClick='ui_move_faster', active=(#move_speed < move_segments[#move_segments][1]), rectAlignment='UpperCenter'}},
+        								{tag='Button', attributes={image='ui_plus', width=(40), height=(40), onClick='ui_move_faster', active=(#move_speed < #move_segments), rectAlignment='UpperCenter'}},
         								{tag='Button', attributes={image='ui_minus', width=(40), height=(40), onClick='ui_move_slower', active=(#move_speed > 1), rectAlignment='LowerCenter'}},
         								{tag='Button', attributes={image='ui_block', color='#ff0000', width=(40), height=(40), onClick='ui_move_cancel', rectAlignment='MiddleLeft'}},
         								{tag='Button', attributes={image='ui_check', color='#00ff00', width=(40), height=(40), onClick='ui_move_commit', rectAlignment='MiddleRight'}},
