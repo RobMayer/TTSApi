@@ -1686,14 +1686,19 @@ function rebuildUI()
             }}
         end
 
+        local updateMe = {}
+        if (needsUpdate == const.NEEDSUPDATE) then
+            updateMe = {tag='Button', attributes={fontSize='22', text='Update Available', onClick='ui_setmode(SETTINGS)', flexibleWidth=1, colors = '#ffcc33|#ffffff|#808080|#606060'}}
+        end
 
         table.insert(ui, {
             tag='Panel', attributes={position='0 -400 -60', height='10000', width='800', rectAlignment='UpperCenter'}, children={
                 {tag='VerticalLayout', attributes={childForceExpandHeight=false, minHeight='0', spacing=5, rectAlignment='UpperCenter'}, children={
                     {tag='HorizontalLayout', attributes={preferredHeight=80, childForceExpandWidth=false, flexibleHeight=0, spacing=20, padding='10 10 10 10'}, children={
-                        {tag='Button', attributes={fontSize='22', text='Load HUD from mini', onClick='ui_extract', flexibleWidth=1}},
-                        {tag='Button', attributes={fontSize='22', text='Add HUD', onClick='ui_inject', flexibleWidth=1}},
-                        {tag='Button', attributes={fontSize='22', text='Remove HUD', onClick='ui_clearmini', flexibleWidth=1}},
+                        {tag='Button', attributes={fontSize='22', text='Load from Mini', onClick='ui_extract', flexibleWidth=1}},
+                        {tag='Button', attributes={fontSize='22', text='Add', onClick='ui_inject', flexibleWidth=1}},
+                        {tag='Button', attributes={fontSize='22', text='Remove', onClick='ui_clearmini', flexibleWidth=1}},
+                        updateMe,
                         {tag='button', attributes={onClick='ui_setmode(SETTINGS)', image='ui_gear', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', preferredWidth='60', height='60', flexibleWidth=0}}
                     }},
                     basePanel,presetPanel,permViewPanel,permEditPanel,barsPanel,markersPanel,arcPanel,flagPanel,geometryPanel,movementPanel
@@ -1728,7 +1733,7 @@ function rebuildUI()
                         updateStatusDisplay,
                         {tag='HorizontalLayout', attributes={}, children={
                             {tag='Button', attributes={onClick='ui_system_checkupdate', text='Check for Update'}},
-                            {tag='Button', attributes={colors='#ffcc33|#ffffff|#808080', onClick='ui_system_update', text='Update and Restart MiniHUD Injector', interactable = (needsUpdate == const.NEEDSUPDATE)}},
+                            {tag='Button', attributes={colors='#ffcc33|#ffffff|#808080|#606060', onClick='ui_system_update', text='Update and Restart MiniHUD Injector', interactable = (needsUpdate == const.NEEDSUPDATE)}},
                         }},
                         {tag='HorizontalLayout', attributes={childForceExpandWidth=false, spacing=5}, children={
                             {tag='Button', attributes={preferredWidth='30', preferredHeight='30', flexibleWidth=0, image=(metaconfig.UPDATECHECK and 'ui_checkon' or 'ui_checkoff'), onClick='ui_meta_toggle(UPDATECHECK)', id='tgl_settings_updatecheck'}},
