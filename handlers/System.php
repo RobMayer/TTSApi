@@ -8,7 +8,7 @@ namespace handlers {
                 if ($input['key'] == \DEPLOY_KEY) {
                     $reset = explode("\n", shell_exec("cd ".rtrim(\PATH_ROOT, "/")." && git reset --hard 2>&1"));
                     $pull = explode("\n", shell_exec("cd ".rtrim(\PATH_ROOT, "/")." && git pull 2>&1"));
-                    return array_merge($reset,$pull);
+                    return array_filter(array_merge($reset,$pull));
                 } else {
                     throw new \errors\NotAuthorized();
                 }
