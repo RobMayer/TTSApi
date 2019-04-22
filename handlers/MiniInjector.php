@@ -188,7 +188,7 @@ function ui_extract(player)
 end
 
 function installUpdate()
-    print('installing update for miniHUD Injector')
+    print('[ffcc33]installing update for miniHUD Injector[-]')
     WebRequest.put('".\URL_ROOT."minihud/build', TRH_Meta, function(res)
         if (not(res.is_error)) then
             local status = string.sub(res.text, 1, 5)
@@ -398,11 +398,7 @@ end
 local ui_mode = '0'
 
 function ui_setmode(player, value, id)
-    if (ui_mode == value) then
-        ui_mode = '0'
-    else
-        ui_mode = value
-    end
+    ui_mode = value
     rebuildUI()
 end
 
@@ -1012,7 +1008,7 @@ function rebuildUI()
         }}
     }
     table.insert(ui, {
-        tag='button', attributes={onClick='ui_setmode(MAIN)', image='ui_power', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', width='80', height='80', position='0 -320 -60' }
+        tag='button', attributes={onClick=(ui_mode == '0' and 'ui_setmode(MAIN)' or 'ui_setmode(0)'), image='ui_power', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', width='80', height='80', position='0 -320 -60' }
     })
     if (ui_mode == 'MAIN') then
 
