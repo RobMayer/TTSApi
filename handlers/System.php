@@ -1,5 +1,22 @@
 <?php
 
+/*
+
+{
+    "mini.injector":[
+        {"version": "3.0.19rc4", "changes":[
+            "Added changelog to API, laid groundwork for injector",
+            "Something else here...",
+        ]},
+        {"version": "3.0.19rc3", "changes":[
+
+        ]}
+    ],
+}
+
+
+*/
+
 namespace handlers {
     class System {
 
@@ -22,7 +39,11 @@ namespace handlers {
         }
 
         public function getVersions() {
-            return UTILITY_VERSIONS;
+            $result = [];
+            foreach (UTILITY_VERSIONS as $theClass => $history) {
+                $result[$theClass] = $history[0]['version'];
+            }
+            return $result;
         }
 
         public function getSpecific($input) {
@@ -31,10 +52,14 @@ namespace handlers {
             if (is_null($data)) { throw new \errors\MalformedToken($input); }
             if (!isset(UTILITY_VERSIONS[$data['class']])) { throw new \errors\UnknownTTSClass($data['class']); }
 
+            $newVersion = UTILITY_VERSIONS[$data['class']][0]['version'];
+            $changes = UTILITY_VERSIONS[$data['class']][0]['changes'] ?? [];
+
             return [
-        		'update' => version_compare($data['version'], UTILITY_VERSIONS[$data['class']], '<'),
+        		'update' => version_compare($data['version'], $newVersion, '<'),
         		'current' => $data['version'],
-        		'new' => UTILITY_VERSIONS[$data['class']],
+        		'new' => $newVersion,
+                'changes' => $changes
         	];
 
         }

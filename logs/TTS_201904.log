@@ -1,1 +1,3 @@
 [WRN:000] 2019-04-21 15:24:35 <C:\workspace\tts_api\handlers\MiniHud.php (8)> Undefined index: inject
+[WRN:000] 2019-04-22 03:11:34 <C:\workspace\tts\api\handlers\System.php (43)> Invalid argument supplied for foreach()
+[WRN:000] 2019-04-22 03:13:15 <C:\workspace\tts\api\handlers\System.php (43)> Invalid argument supplied for foreach()

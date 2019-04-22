@@ -5,8 +5,9 @@ namespace handlers {
         public function build() {
             return "--ThatRobHuman MiniHUDInjector
             TRH_Class = 'mini.injector'
-            local TRH_Version = '".\UTILITY_VERSIONS['mini.injector']."'
+            local TRH_Version = '".\UTILITY_VERSIONS['mini.injector'][0]['version']."'
             local TRH_Version_Next = '???'
+            local TRH_Version_Changes = {}
             local TRH_Meta = '".\lib\VersionManager::token('mini.injector')."'
             local const = { SPECTATOR = 1, PLAYER = 2, PROMOTED = 4, BLACK = 8, HOST = 16, ALL = 31, NOSPECTATOR = 30, OFF = 0, INCREMENTAL = 1, STATIC = 2, BRACKETS = 3, SIMPLEGAUGE = 1, RADIUS = 2, COMPLEXGAUGE = 3, DEFINED = 4, PLASTIC = 0, WOOD = 1, METAL = 2, CARDBOARD = 3, UNKNOWN = 0, UPDATENEEDED = 1, UPTODATE = 2, BADCONNECT = 3}
 
@@ -1710,15 +1711,25 @@ function rebuildUI()
 
         local updateStatusDisplay = {tag='Text', attributes={id='meta_update_status', text='Update Autocheck is disabled', color='#ff3333'}}
 
+        local changeDisplay = {}
+
         if (needsUpdate == const.UPTODATE) then
             updateStatusDisplay = {tag='Text', attributes={id='meta_update_status', text='MiniHUD Injector is up to date', color='#33ccff'}}
         end
         if (needsUpdate == const.NEEDSUPDATE) then
             updateStatusDisplay = {tag='Text', attributes={id='meta_update_status', text='A new version is available', color='#ffcc33'}}
+            local changelog = {{ tag='Text', attributes={fontSize='24', text='Change Log'} }}
+            for i,v in pairs(TRH_Version_Changes) do
+                table.insert(changelog, { tag='Text', attributes={text=string.char(8226)..' '..v} })
+            end
+            changeDisplay = {tag='VerticalLayout', attributes={spacing='5', padding='5 5 5 5', childDorceExpandHeight=false}, children=changelog}
         end
         if (needsUpdate == const.BADCONNECT) then
             updateStatusDisplay = {tag='Text', attributes={id='meta_update_status', text='Error connecting to Robinomicon', color='#ff3333'}}
         end
+
+
+
 
         table.insert(ui, {
             tag='Panel', attributes={position='0 -400 -60', height='10000', width='800', rectAlignment='UpperCenter'}, children={
@@ -1741,6 +1752,7 @@ function rebuildUI()
                             {tag='Button', attributes={preferredWidth='30', preferredHeight='30', flexibleWidth=0, image=(metaconfig.AUTOUPDATE and 'ui_checkon' or 'ui_checkoff'), onClick='ui_meta_toggle(AUTOUPDATE)', id='tgl_settings_autoupdate'}},
                             {tag='Text', attributes={preferredWidth='30', flexibleWidth=1, text='Automatically Update'}},
                         }},
+                        changeDisplay
                     }}
                 }}
             }
@@ -1767,10 +1779,12 @@ function checkForUpdate()
                     needsUpdate = const.NEEDSUPDATE
                     TRH_Version = result.current
                     TRH_Version_Next = result.new
+                    TRH_Version_Changes = result.changes or {}
                 else
                     needsUpdate = const.UPTODATE
                     TRH_Version = result.current
                     TRH_Version_Next = result.new
+                    TRH_Version_Changes = {}
                 end
                 if (ui_mode == 'SETTINGS') then
                     rebuildUI()
