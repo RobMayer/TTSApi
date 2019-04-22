@@ -101,13 +101,13 @@ local currentconfig = {
         DEFINITIONS = {
             {'Standstill','https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/ui/move/standstill.png', 0,0,0,2,0,'#0088ff'},
         }
-    },
-    META = {
-        UPDATECHECK = true,
-        AUTOUPDATE = false,
     }
 }
 local currentpresets = {}
+local metaconfig = {
+    UPDATECHECK = true,
+    AUTOUPDATE = false,
+}
 
 config = {
     ACCESS = {const.PLAYER, const.HOST},
@@ -974,9 +974,9 @@ function ui_movedefinitions(player, value, id)
 end
 
 function ui_meta_toggle(player, value, id)
-    local n = currentconfig.META[value]
-    currentconfig.META[value] = not(n)
-    if (currentconfig.META[value]) then
+    local n = metaconfig[value]
+    metaconfig[value] = not(n)
+    if (metaconfig[value]) then
         self.UI.setAttribute(id, 'image', 'ui_checkon')
     else
         self.UI.setAttribute(id, 'image', 'ui_checkoff')
@@ -1731,9 +1731,9 @@ function rebuildUI()
                             {tag='Button', attributes={colors='#ffcc33|#ffffff|#808080', onClick='ui_system_update', text='Update and Restart MiniHUD Injector', interactable = (needsUpdate == const.NEEDSUPDATE)}},
                         }},
                         {tag='HorizontalLayout', attributes={childForceExpandWidth=false, spacing=5}, children={
-                            {tag='Button', attributes={preferredWidth='30', preferredHeight='30', flexibleWidth=0, image=(currentconfig.META.UPDATECHECK and 'ui_checkon' or 'ui_checkoff'), onClick='ui_meta_toggle(UPDATECHECK)', id='tgl_settings_updatecheck'}},
+                            {tag='Button', attributes={preferredWidth='30', preferredHeight='30', flexibleWidth=0, image=(metaconfig.UPDATECHECK and 'ui_checkon' or 'ui_checkoff'), onClick='ui_meta_toggle(UPDATECHECK)', id='tgl_settings_updatecheck'}},
                             {tag='Text', attributes={preferredWidth='30', flexibleWidth=1, text='Auto-check for Updates'}},
-                            {tag='Button', attributes={preferredWidth='30', preferredHeight='30', flexibleWidth=0, image=(currentconfig.META.AUTOUPDATE and 'ui_checkon' or 'ui_checkoff'), onClick='ui_meta_toggle(AUTOUPDATE)', id='tgl_settings_autoupdate'}},
+                            {tag='Button', attributes={preferredWidth='30', preferredHeight='30', flexibleWidth=0, image=(metaconfig.AUTOUPDATE and 'ui_checkon' or 'ui_checkoff'), onClick='ui_meta_toggle(AUTOUPDATE)', id='tgl_settings_autoupdate'}},
                             {tag='Text', attributes={preferredWidth='30', flexibleWidth=1, text='Automatically Update'}},
                         }},
                     }}
@@ -1753,7 +1753,7 @@ function checkForUpdate()
             elseif (response.result ~= nil) then
                 local result = response.result
                 if (result.update) then
-                    if (currentconfig.META.AUTOUPDATE) then
+                    if (metaconfig.AUTOUPDATE or false) then
                         installUpdate()
                     elseif (needsUpdate == const.UNKNOWN) then
                         print('[ffcc33]There is a new version of The MiniHUD Injector available[-] ('..result.current..' -> '..result.new..')')
@@ -1784,8 +1784,9 @@ function onLoad(save)
 
     local data = JSON.decode(save) or {config = currentconfig, presets = {}}
     currentconfig = data.config or currentconfig
+    metaconfig = data.metaconfig or metaconfig
     currentpresets = data.presets or {}
-    if (currentconfig.META.UPDATECHECK) then
+    if (metaconfig.UPDATECHECK) then
         checkForUpdate()
     end
 
@@ -1816,7 +1817,7 @@ function onLoad(save)
 end
 
 function onSave()
-    return JSON.encode({presets=currentpresets, config = currentconfig})
+    return JSON.encode({presets=currentpresets, config = currentconfig, metaconfig = metaconfig})
 end";
         }
     }
