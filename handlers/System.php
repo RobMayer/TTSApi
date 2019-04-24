@@ -18,7 +18,7 @@ namespace handlers {
         }
 
         public function status() {
-            return \TTS_MODE != "MAINT";
+            return \SYS_MODE != "MAINT";
         }
 
         public function getVersions() {
