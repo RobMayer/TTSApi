@@ -113,7 +113,7 @@ class Central {
     }
 
     public static function debug($text) {
-        if (TTS_MODE == "DEV") {
+        if (SYS_MODE == "DEV") {
             if (is_array($text)) {
                 foreach ($text as $t) {
                     self::$debugs[] = [
@@ -141,7 +141,7 @@ class Central {
     public static function setDefaultHeaders() {
         header("Access-Control-Allow-Origin: *");
         header("X-Clacks-Overhead:GNU Terry Pratchett");
-        header("X-Powered-By: Robinomicon/".\API_VERSION);
+        header("X-Powered-By: Robinomicon/".\SYS_VERSION);
     }
 
     public static function addRoute($path, $class, $method, $function, $flags = [], $enc = \ENC_JSON) {
@@ -190,7 +190,7 @@ class Central {
                 $theErr['text'] = $errMsg;
                 $theErr['level'] = $errLevel;
                 $theErr['data'] = $errData;
-                if (TTS_MODE == "DEV") {
+                if (SYS_MODE == "DEV") {
                     $theErr['debug'] = [
                         "file" => $errFile,
                         "line" => $errLine,
@@ -213,13 +213,13 @@ class Central {
         if (!empty(self::$messages)) {
             $response['messages'] = self::$messages;
         }
-        if (!empty(self::$debugs) && TTS_MODE == "DEV") {
+        if (!empty(self::$debugs) && SYS_MODE == "DEV") {
             $response['debug'] = self::$debugs;
         }
         if (isset($_GET['pass'])) {
             $response['pass'] = $_GET['pass'];
         }
-        $jsonOut = json_encode($response, TTS_JSON_MODE);
+        $jsonOut = json_encode($response, SYS_JSON_MODE);
         if ($jsonOut === false) {
             throw new \errors\Generic("Unable to parse output to JSON for ".$clName."->".$fnName, [], "OUTPUT_JSON_ERROR", 500);
         }
@@ -239,7 +239,7 @@ class Central {
                 if (is_string($err)) {
                     $messages[] = "[FTL] Unknown error has occured: '".$err."'";
                 } elseif ($err instanceof \errors\Generic) {
-                    $messages[] = "[".\TTS_LOG_TERMS[$err->getLevel()]."] ".$err->getMessage();
+                    $messages[] = "[".\SYS_LOG_TERMS[$err->getLevel()]."] ".$err->getMessage();
                     $status = max($status, $err->getStatus());
                 } else {
                     $messages[] = "[FTL] Unknown error has occured.";

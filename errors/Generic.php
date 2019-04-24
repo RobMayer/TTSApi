@@ -9,7 +9,7 @@ namespace errors {
     private $level;
     private $status;
 
-    public function __construct($message, $type, $data = [], $level = TTS_LOG_UNK, $status = 500, $log = true) {
+    public function __construct($message, $type, $data = [], $level = \SYS_LOG_UNK, $status = 500, $log = true) {
 		if (is_array($message)) { $message = json_encode($message, true); }
 		parent::__construct($message);
 		$this->level = $level;
@@ -17,7 +17,7 @@ namespace errors {
 		$this->data = $data;
 		$this->status = $status;
 
-		if ($log && \TTS_LOG_LEVEL & $level == $level) {
+		if ($log && \SYS_LOG_LEVEL & $level == $level) {
 			\lib\Logger::log($message, $level, $status);
 		}
 

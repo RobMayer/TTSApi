@@ -18,12 +18,12 @@ spl_autoload_register(function($theClass) {
         header("Access-Control-Allow-Credentials: true");
         header("Access-Control-Allow-Headers: Origin, Content-Type");
         header("X-Clacks-Overhead:GNU Terry Pratchett");
-        header("X-Powered-By: Robinomicon/".\API_VERSION);
+        header("X-Powered-By: Robinomicon/".\SYS_VERSION);
         http_response_code(500);
 
         $trace = debug_backtrace();
 
-        file_put_contents(PATH_LOGS."TTS_".date('Ym').".log", "[FTL:000] ".date('')." <".$trace[1]['file']." (".$trace[1]['line'].")> Problem loading class '".$theClass."'\n", FILE_APPEND);
+        file_put_contents(PATH_LOGS.SYS_LOG_PREFIX."_".date('Ym').".log", "[FTL:000] ".date('')." <".$trace[1]['file']." (".$trace[1]['line'].")> Problem loading class '".$theClass."'\n", FILE_APPEND);
 
         die();
     }
@@ -32,65 +32,65 @@ spl_autoload_register(function($theClass) {
 set_error_handler(function($code, $msg, $file, $line) {
 
 	$now = date("Y-m-d H:i:s");
-	$level = TTS_LOG_UNK;
+	$level = SYS_LOG_UNK;
 	switch ($code) {
 		case E_ERROR:
 		case E_PARSE:
 		case E_CORE_ERROR:
 		case E_COMPILE_ERROR:
-		$level = TTS_LOG_FTL; break;
+		$level = SYS_LOG_FTL; break;
 		case E_USER_ERROR:
 		case E_RECOVERABLE_ERROR:
-		$level = TTS_LOG_FTL; break;
+		$level = SYS_LOG_FTL; break;
 		case E_NOTICE:
 		case E_WARNING:
 		case E_CORE_WARNING:
 		case E_COMPILE_WARNING:
 		case E_USER_WARNING:
 		case E_USER_NOTICE:
-		$level = TTS_LOG_WRN; break;
+		$level = SYS_LOG_WRN; break;
 		case E_STRICT:
 		case E_USER_DEPRECATED:
 		case E_DEPRECATED:
-		$level = TTS_LOG_INF; break;
+		$level = SYS_LOG_INF; break;
 		default:
-		$level = TTS_LOG_UNK; break;
+		$level = SYS_LOG_UNK; break;
 	}
 
 	$trace = debug_backtrace();
 
-	if (TTS_LOG_LEVEL & $level == $level) {
-		file_put_contents(PATH_LOGS."TTS_".date('Ym').".log", "[".TTS_LOG_TERMS[$level].":000] ".$now." <".$file." (".$line.")> ".$msg."\n", FILE_APPEND);
+	if (SYS_LOG_LEVEL & $level == $level) {
+		file_put_contents(PATH_LOGS.SYS_LOG_PREFIX.date('Ym').".log", "[".SYS_LOG_TERMS[$level].":000] ".$now." <".$file." (".$line.")> ".$msg."\n", FILE_APPEND);
 	}
 
 	header("Access-Control-Allow-Origin: *");
 	header("Content-Type: application/json");
 	header("X-Clacks-Overhead: GNU Terry Pratchett");
-	header("X-Powered-By: Robinomicon/".\API_VERSION);
+	header("X-Powered-By: Robinomicon/".\SYS_VERSION);
 	http_response_code(500);
 
-	if (TTS_SEND_LEVEL & $level == $level) {
+	if (SYS_SEND_LEVEL & $level == $level) {
 
 		$response = [
 			"errors" => [
 				[
 					"type" => "INTERNAL",
-					"level" => TTS_LOG_TERMS[$level],
-					"text" => TTS_MASK_LEVEL & $level == $level ? "There was a problem server-side. The error has been logged and ThatRobHuman has been notified." : $msg,
+					"level" => SYS_LOG_TERMS[$level],
+					"text" => SYS_MASK_LEVEL & $level == $level ? "There was a problem server-side. The error has been logged and ThatRobHuman has been notified." : $msg,
 					"time" => $now,
 					"data" => [],
 				]
 			]
 		];
 
-		if (TTS_MODE == "DEV") {
+		if (SYS_MODE == "DEV") {
 			$response['errors'][0]['debug'] = [
 				"file" => $file,
 				"line" => $line,
 				"trace" => debug_backtrace(),
 			];
 		}
-		echo json_encode($response, TTS_JSON_MODE);
+		echo json_encode($response, SYS_JSON_MODE);
 	}
 
 	die();
@@ -105,15 +105,14 @@ set_exception_handler(function($e) {
 
 	header("Access-Control-Allow-Methods: OPTIONS");
 	header("Access-Control-Allow-Origin: *");
-	header("Access-Control-Allow-Headers: Origin, Content-Type, X-Kdy-Apikey, X-Kdy-Token");
 	header("Content-Type: application/json");
-	header("X-Powered-By: Robinomicon/".\API_VERSION);
+	header("X-Powered-By: Robinomicon/".\SYS_VERSION);
 	header("X-Clacks-Overhead:GNU Terry Pratchett");
 
 	$type = "INTERNAL";
 	$msg = $e->getMessage();
 	$status = 500;
-	$level = TTS_LOG_UNK;
+	$level = SYS_LOG_UNK;
 	$data = [];
 
 	if ($e instanceof \errors\Generic) {
@@ -122,24 +121,24 @@ set_exception_handler(function($e) {
 		$type = $e->getType();
 		$data = $e->getData();
 		$level = $e->getLevel();
-		if (TTS_LOG_LEVEL & $level == $level) {
+		if (SYS_LOG_LEVEL & $level == $level) {
 			\lib\Logger::log($msg, $level, $status, $e->getFile(), $e->getLine());
 		}
 	} else {
-		if (TTS_LOG_LEVEL & $level == $level) {
+		if (SYS_LOG_LEVEL & $level == $level) {
 			\lib\Logger::log($msg, $level, $status, $e->getFile(), $e->getLine());
 		}
 	}
 
 	http_response_code($status);
 
-	if (TTS_SEND_LEVEL & $level == $level) {
+	if (SYS_SEND_LEVEL & $level == $level) {
 		$response = [
-			"level" => TTS_LOG_TERMS[$level],
+			"level" => SYS_LOG_TERMS[$level],
 			"time" => $now,
 			"data" => $data,
 		];
-		if (TTS_MODE == "DEV") {
+		if (SYS_MODE == "DEV") {
 			$response['type'] = $type;
 			$response['text'] = $msg;
 			$response['debug'] = [
@@ -148,10 +147,10 @@ set_exception_handler(function($e) {
 				"trace" => $e->getTrace(),
 			];
 		} else {
-			$response['type'] = (TTS_MASK_LEVEL & $level == $level ? "INTERNAL" : $type);
-			$response['text'] = (TTS_MASK_LEVEL & $level == $level ? "There was a problem server-side. The error has been logged and ThatRobHuman has been notified" : $msg);
+			$response['type'] = (SYS_MASK_LEVEL & $level == $level ? "INTERNAL" : $type);
+			$response['text'] = (SYS_MASK_LEVEL & $level == $level ? "There was a problem server-side. The error has been logged and ThatRobHuman has been notified" : $msg);
 		}
-		echo json_encode(['errors' => [$response]], TTS_JSON_MODE);
+		echo json_encode(['errors' => [$response]], SYS_JSON_MODE);
 	}
 
 	die();
