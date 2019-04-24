@@ -1,5 +1,8 @@
 {
     "mini.injector":[
+		{"version": "3.0.19", "changes":[
+            "3.0.19 Release"
+        ]},
         {"version": "3.0.19rc4", "changes":[
             "Added support for a changelog"
         ]}
