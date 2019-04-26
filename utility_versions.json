@@ -1,12 +1,11 @@
 {
     "mini.controller":[
-        {"version": "2.0.1a.22", "changes":[
-            "ui cleanup",
-            "fixed guid ref"
+        {"version": "2.0.1b", "changes":[
+            "beta version"
         ]}
     ],
     "mini.injector":[
-        {"version": "3.0.20a1", "changes":[
+        {"version": "3.0.20a2", "changes":[
             "Controller Compatibility"
         ]},
 		{"version": "3.0.19", "changes":[
