@@ -622,7 +622,7 @@ function rebuildUI()
         local changeDisplay = {}
 
         if (needsUpdate == const.UPTODATE) then
-            updateStatusDisplay = {tag='Text', attributes={id='meta_update_status', text='MiniHUD Injector is up to date', color='#33ccff'}}
+            updateStatusDisplay = {tag='Text', attributes={id='meta_update_status', text='MiniHUD Controller is up to date', color='#33ccff'}}
         end
         if (needsUpdate == const.NEEDSUPDATE) then
             updateStatusDisplay = {tag='Text', attributes={id='meta_update_status', text='A new version is available', color='#ffcc33'}}
@@ -649,7 +649,7 @@ function rebuildUI()
                         updateStatusDisplay,
                         {tag='HorizontalLayout', attributes={}, children={
                             {tag='Button', attributes={onClick='ui_system_checkupdate', text='Check for Update'}},
-                            {tag='Button', attributes={colors='#ffcc33|#ffffff|#808080|#606060', onClick='ui_system_update', text='Update and Restart MiniHUD Injector', interactable = (needsUpdate == const.NEEDSUPDATE)}},
+                            {tag='Button', attributes={colors='#ffcc33|#ffffff|#808080|#606060', onClick='ui_system_update', text='Update and Restart MiniHUD Controller', interactable = (needsUpdate == const.NEEDSUPDATE)}},
                         }},
                         {tag='HorizontalLayout', attributes={childForceExpandWidth=false, spacing=5}, children={
                             {tag='Button', attributes={preferredWidth='30', preferredHeight='30', flexibleWidth=0, image=(metaconfig.UPDATECHECK and 'ui_checkon' or 'ui_checkoff'), onClick='ui_meta_toggle(UPDATECHECK)', id='tgl_settings_updatecheck'}},
