@@ -6,5 +6,6 @@
 \Central::addRoute("status", "handlers/System", "GET", "status");
 \Central::addRoute("minihud/inject", "handlers/MiniHud", "PUT", "build", [PARAM_JSON], \ENC_RAW);
 \Central::addRoute("minihud/build", "handlers/MiniInjector", "PUT", "build", [], \ENC_RAW);
+\Central::addRoute("minicontroller/build", "handlers/MiniController", "PUT", "build", [], \ENC_RAW);
 
 ?>

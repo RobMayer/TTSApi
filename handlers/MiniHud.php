@@ -95,7 +95,6 @@ namespace handlers {
             		if ($input['MODULE_ARC']) { $res .= "if (arc_obj ~= nil) then arc_obj.destruct() end\n"; }
             		if ($input['MODULE_GEOMETRY']) { $res .= "if (geo_obj ~= nil) then geo_obj.destruct() end\n"; }
             		if ($input['MODULE_MOVEMENT']) { $res .= "if (move_obj ~= nil) then move_obj.destruct() end\n"; }
-            		$res .= "if controller_obj ~= nil then initiateControllerUnlink() end\n";
             	$res .= "end\n";
             }
 
@@ -106,21 +105,12 @@ namespace handlers {
             	if ($input['MODULE_MARKERS']) { $res .= "data.markers=state.markers\n"; }
             	if ($input['MODULE_FLAG']) { $res .= "data.flag=state.flag\n"; }
             	if ($input['MODULE_GEOMETRY']) { $res .= "data.geometry=state.geometry\n"; }
-            	$res .= "if controller_obj~=nil then a.controller=controller_obj.guid end\n";
             	$res .= "return JSON.encode(data)\n";
             $res .= "end\n";
 
             // onLoad
             $res .= "function onLoad(save)
             	save = JSON.decode(save) or {}
-            	if (save.controller ~= nil) then
-            		local theObj = getObjectFromGUID(save.controller)
-            		if (theObj ~= nil) then
-            			if (theObj.call('verifyLink', {guid=self.guid})) then
-            				controller_obj = theObj
-            			end
-            		end
-            	end
             ";
             if ($input['MODULE_BARS']) { $res .= "state.bars = save.bars or {}\n"; }
             if ($input['MODULE_MARKERS']) { $res .= "state.markers = save.markers or {}\n"; }
@@ -155,13 +145,8 @@ namespace handlers {
             $res .= "function initiateUnlink()
             	local theObj = unsetController()
             	if (theObj ~= nil) then
-            		theObj.call('unsetMini', {guid = self.guid})
+            		theObj.call('untrackMini', {guid = self.guid})
             	end
-            end\n";
-
-            $res .= "function verifyLink(data)
-            	local obj = data.object or getObjectFromGUID(data.guid or error('object or guid is required', 2)) or error('invalid object',2)
-            	return (obj == controller_obj)
             end\n";
 
             $res .= "function setController(data)
@@ -757,7 +742,7 @@ namespace handlers {
             	                state.markers[i][4] = cur
             	                self.UI.setAttribute('counter_mk_'..i, 'text', cur)
             	                self.UI.setAttribute('disp_mk_'..i, 'text', cur > 1 and cur or '')
-            	                --if (controller_obj ~= nil) then controller_obj.call('alterMiniMarker', { guid = self.guid, index=i, count=cur }) end
+            	                if (controller_obj ~= nil) then controller_obj.call('syncAdjMiniMarker', { guid = self.guid, index=i, count=cur }) end
             	                added = true
             	            end
             	            break
@@ -765,6 +750,7 @@ namespace handlers {
             	    end
             	    if (found == false) then
             	        table.insert(state.markers, {data.name, data.url, data.color or '#ffffff', (data.stacks or false) and count or 1, data.stacks or false})
+                        if (controller_obj ~= nil) then controller_obj.call('syncMiniMarkers', {}) end
             	        rebuildAssets()
             	        Wait.frames(rebuildUI, ".($input['REFRESH'] ?? $DEFAULT_REFRESH).")
             	        added = true
@@ -791,13 +777,12 @@ namespace handlers {
             	    if (cur > 1) then
             	        cur = cur - (data.amount or 1)
             	        state.markers[i][4] = cur
-            	        local display = ((cur > 1) and cur or '')
-            	        self.UI.setAttribute('counter_mk_'..i, 'text', display)
-            	        self.UI.setAttribute('disp_mk_'..i, 'text', display)
-            	        --if (controller_obj ~= nil) then controller_obj.call('alterMiniMarker', { guid = self.guid, index=i, count=cur }) end
+            	        self.UI.setAttribute('counter_mk_'..i, 'text', ((cur > 1) and cur or ''))
+            	        self.UI.setAttribute('disp_mk_'..i, 'text', ((cur > 1) and cur or ''))
+            	        if (controller_obj ~= nil) then controller_obj.call('syncAdjMiniMarker', { guid = self.guid, index=i, count=cur }) end
             	    else
             	        table.remove(state.markers, i)
-            	        --if (controller_obj ~= nil) then controller_obj.call('updateMiniMarkers', {}) end
+            	        if (controller_obj ~= nil) then controller_obj.call('syncMiniMarkers', {}) end
             	        rebuildUI()
             	    end
             	end\n";
@@ -810,10 +795,12 @@ namespace handlers {
             	        end
             	    end
             	    state.markers = tmp
+                    if (controller_obj ~= nil) then controller_obj.call('syncMiniMarkers', {}) end
             	    rebuildUI()
             	end\n";
             	$res .= "function clearMarkers()
             	    state.markers={}
+                    if (controller_obj ~= nil) then controller_obj.call('syncMiniMarkers', {}) end
             	    rebuildUI()
             	end\n";
 
@@ -844,6 +831,8 @@ namespace handlers {
             			data.text or false,
                         data.big or false,
             		})
+                    if (controller_obj ~= nil) then controller_obj.call('syncBars', {}) end
+                    rebuildUI()
             	end\n";
             	$res .= "function getBars()
             	    res = {}
@@ -900,9 +889,9 @@ namespace handlers {
 
             	    self.UI.setAttribute('bar_'..index, 'percentage', per)
             	    self.UI.setAttribute('bar_'..index, 'fillImageColor', color)
-            	    self.UI.setAttribute('bar_container_'..index, 'minHeight', isBig and 30 or 15)
-            	    self.UI.setAttribute('bar_text_'..index, 'active', hasText)
-            	    self.UI.setAttribute('bar_text_'..index, 'text', cur..' / '..max)
+            	    self.UI.setAttribute('bar_'..index..'_container', 'minHeight', isBig and 30 or 15)
+            	    self.UI.setAttribute('bar_'..index..'_text', 'active', hasText)
+            	    self.UI.setAttribute('bar_'..index..'_text', 'text', cur..' / '..max)
 
             	    state.bars[index][1] = name
             	    state.bars[index][2] = color
@@ -910,6 +899,19 @@ namespace handlers {
             	    state.bars[index][4] = max
                     state.bars[index][5] = hasText
             	    state.bars[index][6] = isBig
+
+                    if (controller_obj ~= nil) then
+                        controller_obj.call('syncBarValues', {
+                            object = self,
+                            index = index,
+                            name = name,
+                            color = color,
+                            current = cur,
+                            maximum = max,
+                            text = hasText,
+                            big = isBig
+                        })
+                    end
             	end\n";
             	$res .= "function adjustBar(data)
             	    local index = tonumber(data.index) or error('index must numeric')
@@ -922,26 +924,42 @@ namespace handlers {
             	    self.UI.setAttribute('bar_'..index..'_text', 'text', cur..' / '..max)
             	    self.UI.setAttribute('inp_bar_'..index..'_current', 'text', cur)
             	    state.bars[index][3] = cur
+
+                    if (controller_obj ~= nil) then
+                        controller_obj.call('syncBarValues', {
+                            object = self,
+                            index = index,
+                            name = bar[1],
+                            color = bar[2],
+                            current = cur,
+                            maximum = max,
+                            text = bar[5],
+                            big = bar[6]
+                        })
+                    end
+
             	end\n";
             	$res .= "function removeBar(data)
-            		local index = tonumber(data.index) or error('index must be numeric');
+            		local index = tonumber(data.index) or error('index must be numeric')
             	    local tmp = {}
             	    for i,bar in pairs(state.bars) do
-            	        if (i ~= data.index) then
+            	        if (i ~= index) then
             	            table.insert(tmp, bar)
             	        end
             	    end
             	    state.bars = tmp
+                    if (controller_obj ~= nil) then controller_obj.call('syncBars', {}) end
             	    rebuildUI()
             	end\n";
             	$res .= "function clearBars(data)
             		state.bars={}
             	    rebuildUI()
+                    if (controller_obj ~= nil) then controller_obj.call('syncBars', {}) end
             	end\n";
 
             	//UI Hooks
             	$res .= "function ui_addbar(player)
-            		addBar({name='Name', color='#ffcc33', current=10, maximum=10, big=false, text=false})
+            		addBar({name='Name', color='#ffffff', current=10, maximum=10, big=false, text=false})
             	end\n";
             	$res .= "function ui_removebar(player, index)
             		removeBar({index=index})
@@ -1183,7 +1201,7 @@ namespace handlers {
         		for i,bar in pairs(state.bars) do
         			local per = ((bar[4] == 0) and 0 or (bar[3] / bar[4] * 100))
         			table.insert(mainlist_bars,
-        	        {tag='horizontallayout', attributes={id='bar_container_'..i,minHeight=bar[6]and 30 or 15,childForceExpandWidth=false,childForceExpandHeight=false,childAlignment='MiddleCenter'},
+        	        {tag='horizontallayout', attributes={id='bar_'..i..'_container',minHeight=bar[6]and 30 or 15,childForceExpandWidth=false,childForceExpandHeight=false,childAlignment='MiddleCenter'},
         	            children={
         	                {tag='button', attributes={preferredHeight='20',preferredWidth='20',flexibleWidth='0',image='ui_minus',colors='#ccccccff|#ffffffff|#404040ff|#808080ff',onClick='ui_adjbar('..i..'|-1)',visibility=PERMEDIT} },
         	                {tag='panel', attributes={flexibleWidth='1',flexibleHeight='1'},
