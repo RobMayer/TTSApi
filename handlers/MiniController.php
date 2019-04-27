@@ -160,10 +160,21 @@ function onObjectDestroy(obj)
         local index = mapG2I[obj.guid]
         local tmpG2I = {}
         local tmpI2G = {}
-        for g,i in pairs(mapG2I) do if (i ~= index) then tmpG2I[g] = i end end
-        for i,g in pairs(mapI2G) do if (i ~= index) then tmpI2G[i] = g end end
+        local ni = 1
+        for i,g in pairs(mapI2G) do
+            if (i ~= index) then
+                tmpG2I[g] = ni
+                table.insert(tmpI2G, g)
+                ni = ni + 1
+            end
+        end
         mapG2I = tmpG2I
         mapI2G = tmpI2G
+
+        if (config.TURNS and index == turn) then
+            turn = math.max(1, turn - 1);
+        end
+
         rebuildAssets()
         if (ui_mode ~= '0') then
             Wait.frames(rebuildUI, 3)
@@ -205,10 +216,21 @@ function untrackMini(data)
         local index = mapG2I[mini.guid]
         local tmpG2I = {}
         local tmpI2G = {}
-        for g,i in pairs(mapG2I) do if (i ~= index) then tmpG2I[g] = i end end
-        for i,g in pairs(mapI2G) do if (i ~= index) then tmpI2G[i] = g end end
+        local ni = 1
+        for i,g in pairs(mapI2G) do
+            if (i ~= index) then
+                tmpG2I[g] = ni
+                table.insert(tmpI2G, g)
+                ni = ni + 1
+            end
+        end
         mapG2I = tmpG2I
         mapI2G = tmpI2G
+
+        if (config.TURNS and index == turn) then
+            turn = math.max(1, turn - 1);
+        end
+
         rebuildAssets()
         if (ui_mode ~= '0') then
             Wait.frames(rebuildUI, 3)
@@ -488,9 +510,9 @@ function rebuildUI()
     if (ui_mode == 'MAIN') then
         local minilist = {
             tag='VerticalScrollView',
-            attributes={id='scroll', rectAlignment='UpperCenter', offsetXY='0 -40', minHeight='800', width='600', inertia=false, scrollSensitivity=4, color='black'},
+            attributes={id='scroll', minHeight='800', width='600', inertia=false, scrollSensitivity=4, color='black'},
             children = {
-                {tag='VerticalLayout', attributes={childAlignment='UpperCenter', childForceExpandHeight=false, spacing='5', padding='5 5 5 5'}, children={}}
+                {tag='VerticalLayout', attributes={childForceExpandHeight=false, contentSizeFitter='vertical', spacing='5', padding='5 5 5 5'}, children={}}
             }
         }
         for index,guid in pairs(mapI2G) do
@@ -503,7 +525,7 @@ function rebuildUI()
                 local color = '#'..string.format('%02x', math.ceil(c.r * 255))..string.format('%02x', math.ceil(c.g * 255))..string.format('%02x', math.ceil(c.b * 255))
 
                 local miniui = {
-                    tag='verticallayout', attributes={color='#202020', childForceExpandHeight=false, padding=5, spacing=5}, children={
+                    tag='verticallayout', attributes={color='#202020', childForceExpandHeight=false, padding=5, spacing=5, flexibleHeight=0}, children={
                         {tag='horizontallayout', attributes={preferredHeight = 40, childForceExpandHeight=false, childForceExpandWidth=false, spacing=5}, children={
                             {tag='verticallayout', attributes={childForceExpandHeight=false, preferredHeight=40, preferredWidth=40, flexibleWidth=0}, children={
                                 {tag='button', attributes={minWidth = '40', preferredWidth='20', flexibleWidth=0, onClick='ui_reorder('..guid..'_'..(index-1)..')', interactable=(index ~= 1), image='ui_arrow_u'}},
