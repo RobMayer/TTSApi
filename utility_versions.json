@@ -1,11 +1,11 @@
 {
     "mini.controller":[
-        {"version": "2.0.1b", "changes":[
-            "beta version"
+        {"version": "2.0.2", "changes":[
+            "Complete Overhaul"
         ]}
     ],
     "mini.injector":[
-        {"version": "3.0.20a2", "changes":[
+        {"version": "3.1.0", "changes":[
             "Controller Compatibility"
         ]},
 		{"version": "3.0.19", "changes":[

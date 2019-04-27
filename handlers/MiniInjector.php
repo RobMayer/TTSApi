@@ -199,6 +199,7 @@ function installUpdate()
                 if (string.sub(result, 1, string.len(sig)) == sig) then
                     self.setLuaScript(result)
                     self.reload()
+                    print('[33ff33]Installation Successful[-]')
                 else
                     error('bad parsing')
                 end
