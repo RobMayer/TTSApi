@@ -265,12 +265,12 @@ namespace handlers {
             					b.sticky=false
             					b.interactable=false
             					b.setLock(true)
-                                b.setLuaScript('function onLoad() Wait.condition(function() self.getComponent(\'BoxCollider\').set(\'enabled\',false) end, function() return not(self.loading_custom) end) end ')
+                                b.setLuaScript('function onLoad() Wait.condition(function() (self.getComponent(\'BoxCollider\') or self.getComponent(\'MeshCollider\')).set(\'enabled\',false) end, function() return not(self.loading_custom) end) end ')
             				end
             			})
             			move_obj.setCustomObject({
             				mesh='https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/components/arcs/round0.obj',
-            				collider='',
+            				collider='https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/utility/null_COL.obj',
             				material=3,
             				specularIntensity=0,
             				cast_shadows=false
@@ -411,7 +411,7 @@ namespace handlers {
             	                end
             	                obj.setVar('parent', self)
             	                obj.setLuaScript([[
-                                    function onLoad() Wait.condition(function() self.getComponent('BoxCollider').set('enabled',false) end, function() return not(self.loading_custom) end) end
+                                    function onLoad() Wait.condition(function() (self.getComponent('BoxCollider') or self.getComponent('MeshCollider')).set('enabled',false) end, function() return not(self.loading_custom) end) end
                                     function onUpdate() if (parent ~= nil) then if (not parent.resting) then self.setPosition(parent.getPosition()) self.setRotation(parent.getRotation()) self.setScale(parent.getScale()) end else self.destruct() end end
                                 ]])
             	                obj.mass = 0
@@ -430,7 +430,7 @@ namespace handlers {
             	            mesh = state.geometry.mesh or '',
             	            diffuse = state.geometry.texture or '',
             	            normal = state.geometry.normal or '',
-            	            collider = '',
+            	            collider = 'https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/utility/null_COL.obj',
             	            type = 0,
             	            material = state.geometry.material or 0,
             	        })
@@ -544,7 +544,7 @@ namespace handlers {
             			callback_function=function(b)
             				b.setColorTint(clr)
             				b.setVar('parent',self)
-            				b.setLuaScript('function onLoad() Wait.condition(function() self.getComponent(\'BoxCollider\').set(\'enabled\',false) end, function() return not(self.loading_custom) end) end function onUpdate() if (parent ~= nil) then if (not parent.resting) then self.setPosition(parent.getPosition()) self.setRotation(parent.getRotation()) end else self.destruct() end end')
+            				b.setLuaScript('function onLoad() Wait.condition(function() (self.getComponent(\'BoxCollider\') or self.getComponent(\'MeshCollider\')).set(\'enabled\',false) end, function() return not(self.loading_custom) end) end function onUpdate() if (parent ~= nil) then if (not parent.resting) then self.setPosition(parent.getPosition()) self.setRotation(parent.getRotation()) end else self.destruct() end end')
             				b.getComponent('MeshRenderer').set('receiveShadows',false)
             				b.mass=0
             				b.bounciness=0
@@ -560,7 +560,7 @@ namespace handlers {
             		})
             		arc_obj.setCustomObject({
             			mesh='".$input['ARCS']['MESH']."',
-            			collider='',
+            			collider='https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/utility/null_COL.obj',
             			material=3,
             			specularIntensity=0,
             			cast_shadows=false
