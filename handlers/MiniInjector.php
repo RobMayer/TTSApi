@@ -9,7 +9,7 @@ namespace handlers {
             local TRH_Version_Next = '???'
             local TRH_Version_Changes = {}
             local TRH_Meta = '".\lib\VersionManager::token('mini.injector')."'
-            local const = { SPECTATOR = 1, PLAYER = 2, PROMOTED = 4, BLACK = 8, HOST = 16, ALL = 31, NOSPECTATOR = 30, OFF = 0, INCREMENTAL = 1, STATIC = 2, BRACKETS = 3, SIMPLEGAUGE = 1, RADIUS = 2, COMPLEXGAUGE = 3, DEFINED = 4, PLASTIC = 0, WOOD = 1, METAL = 2, CARDBOARD = 3, UNKNOWN = 0, UPDATENEEDED = 1, UPTODATE = 2, BADCONNECT = 3}
+            local const = { SPECTATOR = 1, PLAYER = 2, PROMOTED = 4, BLACK = 8, HOST = 16, ALL = 31, NOSPECTATOR = 30, OFF = 0, INCREMENTAL = 1, STATIC = 2, BRACKETS = 3, SIMPLEGAUGE = 1, RADIUS = 2, COMPLEXGAUGE = 3, DEFINED = 4, PLASTIC = 0, WOOD = 1, METAL = 2, CARDBOARD = 3, UNKNOWN = 0, UPDATENEEDED = 1, UPTODATE = 2, BADCONNECT = 3, ARC_FRONTBACK = 1, ARC_FOURWAY = 2, ARC_SIXWAY = 3}
 
 local needsUpdate = const.UNKNOWN;
 
@@ -63,6 +63,7 @@ local currentconfig = {
     MODULE_FLAG = false,
     MODULE_GEOMETRY = false,
     MODULE_MOVEMENT = false,
+    MODULE_SHIELDS = false,
     ARCS = {
         MODE = 1,
         ZERO = 0,
@@ -102,6 +103,10 @@ local currentconfig = {
         DEFINITIONS = {
             {'Standstill','https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/ui/move/standstill.png', 0,0,0,2,0,'#0088ff'},
         }
+    },
+    SHIELDS = {
+        MODE = 1,
+        VALUES = {1,1,1,1,1,1},
     }
 }
 local currentpresets = {}
@@ -125,6 +130,7 @@ local sectionVis = {
     flag = false,
     geometry = false,
     movement = false,
+    shields = false,
 }
 
 local permit = function(player)
@@ -290,6 +296,7 @@ function getInjectionConfig()
         MODULE_FLAG = currentconfig.MODULE_FLAG,
         MODULE_GEOMETRY = currentconfig.MODULE_GEOMETRY,
         MODULE_MOVEMENT = currentconfig.MODULE_MOVEMENT,
+        MODULE_SHIELDS = currentconfig.MODULE_SHIELDS,
     }
 
     if (currentconfig.MODULE_MOVEMENT == true) then
