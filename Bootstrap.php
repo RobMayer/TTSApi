@@ -60,7 +60,7 @@ set_error_handler(function($code, $msg, $file, $line) {
 	$trace = debug_backtrace();
 
 	if (SYS_LOG_LEVEL & $level == $level) {
-		file_put_contents(PATH_LOGS.SYS_LOG_PREFIX.date('Ym').".log", "[".SYS_LOG_TERMS[$level].":000] ".$now." <".$file." (".$line.")> ".$msg."\n", FILE_APPEND);
+		file_put_contents(PATH_LOGS.SYS_LOG_PREFIX."_".date('Ym').".log", "[".SYS_LOG_TERMS[$level].":000] ".$now." <".$file." (".$line.")> ".$msg."\n", FILE_APPEND);
 	}
 
 	header("Access-Control-Allow-Origin: *");

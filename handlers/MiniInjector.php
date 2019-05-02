@@ -9,7 +9,7 @@ namespace handlers {
             local TRH_Version_Next = '???'
             local TRH_Version_Changes = {}
             local TRH_Meta = '".\lib\VersionManager::token('mini.injector')."'
-            local const = { SPECTATOR = 1, PLAYER = 2, PROMOTED = 4, BLACK = 8, HOST = 16, ALL = 31, NOSPECTATOR = 30, OFF = 0, INCREMENTAL = 1, STATIC = 2, BRACKETS = 3, SIMPLEGAUGE = 1, RADIUS = 2, COMPLEXGAUGE = 3, DEFINED = 4, PLASTIC = 0, WOOD = 1, METAL = 2, CARDBOARD = 3, UNKNOWN = 0, UPDATENEEDED = 1, UPTODATE = 2, BADCONNECT = 3, ARC_FRONTBACK = 1, ARC_FOURWAY = 2, ARC_SIXWAY = 3}
+            local const = { SPECTATOR = 1, PLAYER = 2, PROMOTED = 4, BLACK = 8, HOST = 16, ALL = 31, NOSPECTATOR = 30, OFF = 0, INCREMENTAL = 1, STATIC = 2, BRACKETS = 3, SIMPLEGAUGE = 1, RADIUS = 2, COMPLEXGAUGE = 3, DEFINED = 4, PLASTIC = 0, WOOD = 1, METAL = 2, CARDBOARD = 3, UNKNOWN = 0, UPDATENEEDED = 1, UPTODATE = 2, BADCONNECT = 3, SHIELD_FRONTBACK = 1, SHIELD_LEFTRIGHT = 2, SHIELD_FOURWAY = 3, SHIELD_SIXWAY = 4, SHIELD_CAPATLIMIT = 1, SHIELD_WRAPAROUND = 2, SHIELD_IGNORELIMIT = 3}
 
 local needsUpdate = const.UNKNOWN;
 
@@ -105,8 +105,15 @@ local currentconfig = {
         }
     },
     SHIELDS = {
-        MODE = 1,
-        VALUES = {1,1,1,1,1,1},
+        SHAPE = 1,
+        CURRENT = {6,6,6,6,6,6},
+        LIMIT = {6,6,6,6,6,6},
+        CRITICAL = {1,1,1,1,1,1},
+        COLOR = '#1f87ff',
+        UIHEIGHT = 0.25,
+        CRITCOLOR = '#da1918',
+        LIMITMODE = 1,
+        AUTOMODE = true,
     }
 }
 local currentpresets = {}
@@ -277,6 +284,32 @@ function getInjectionState()
             color = currentconfig.GEOMETRY.COLOR or 'inherit',
         }
     end
+    if (currentconfig.MODULE_SHIELDS) then
+        toInject.shields = {}
+        if (currentconfig.SHIELDS.SHAPE == const.SHIELD_FRONTBACK) then
+            toInject.shields.current = {table.unpack(currentconfig.SHIELDS.CURRENT, 1, 2)}
+            toInject.shields.limit = {table.unpack(currentconfig.SHIELDS.LIMIT, 1, 2)}
+            toInject.shields.critical = {table.unpack(currentconfig.SHIELDS.CRITICAL, 1, 2)}
+        end
+        if (currentconfig.SHIELDS.SHAPE == const.SHIELD_LEFTRIGHT) then
+            toInject.shields.current = {table.unpack(currentconfig.SHIELDS.CURRENT, 1, 2)}
+            toInject.shields.limit = {table.unpack(currentconfig.SHIELDS.LIMIT, 1, 2)}
+            toInject.shields.critical = {table.unpack(currentconfig.SHIELDS.CRITICAL, 1, 2)}
+        end
+        if (currentconfig.SHIELDS.SHAPE == const.SHIELD_FOURWAY) then
+            toInject.shields.current = {table.unpack(currentconfig.SHIELDS.CURRENT, 1, 4)}
+            toInject.shields.limit = {table.unpack(currentconfig.SHIELDS.LIMIT, 1, 4)}
+            toInject.shields.critical = {table.unpack(currentconfig.SHIELDS.CRITICAL, 1, 4)}
+        end
+        if (currentconfig.SHIELDS.SHAPE == const.SHIELD_SIXWAY) then
+            toInject.shields.current = {table.unpack(currentconfig.SHIELDS.CURRENT, 1, 6)}
+            toInject.shields.limit = {table.unpack(currentconfig.SHIELDS.LIMIT, 1, 6)}
+            toInject.shields.critical = {table.unpack(currentconfig.SHIELDS.CRITICAL, 1, 6)}
+        end
+        toInject.shields.color = currentconfig.SHIELDS.COLOR
+        toInject.shields.critcolor = currentconfig.SHIELDS.CRITCOLOR
+        toInject.shields.automode = currentconfig.SHIELDS.AUTOMODE or false
+    end
     return JSON.encode(toInject)
 end
 
@@ -362,6 +395,13 @@ function getInjectionConfig()
     end
     if (currentconfig.MODULE_GEOMETRY) then
         tmp.LOCK_GEOMETRY = currentconfig.LOCK_GEOMETRY
+    end
+    if (currentconfig.MODULE_SHIELDS) then
+        tmp.SHIELDS = {
+            SHAPE = currentconfig.SHIELDS.SHAPE,
+            UIHEIGHT = currentconfig.SHIELDS.UIHEIGHT,
+            LIMITMODE = currentconfig.SHIELDS.LIMITMODE
+        }
     end
 
     tmpEdit = {}
@@ -794,6 +834,70 @@ function ui_presetdelete(player, index)
     rebuildUI()
 end
 
+--SHIELDS
+
+function ui_shieldsshape(player, val)
+    currentconfig.SHIELDS.SHAPE = tonumber(val) or 0
+    rebuildUI()
+end
+
+function ui_shieldslimitmode(player, val)
+    currentconfig.SHIELDS.LIMITMODE = tonumber(val) or 0
+    rebuildUI()
+end
+
+function ui_shields_setcolor(player, value, id)
+    ui_editshields(player, value, 'inp_shields_color')
+end
+
+function ui_shields_setcritcolor(player, value, id)
+    ui_editshields(player, value, 'inp_shields_critcolor')
+end
+
+function ui_editshields(player, value, id)
+    local args = {}
+    for a in string.gmatch(id, '([^%_]+)') do
+        table.insert(args,a)
+    end
+    local key = args[3]
+    if (key == 'current' or key == 'limit' or key == 'critical') then
+        local index = tonumber(args[4]) or error('index is required when modifying current, limit, or critical')
+        local n = tonumber(value)
+        if (n ~= nil) then
+            currentconfig.SHIELDS[string.upper(key)][index] = n
+            self.UI.setAttribute(id, 'text', n)
+        else
+            self.UI.setAttribute(id, 'text', value)
+        end
+    end
+    if (key == 'color') then
+        currentconfig.SHIELDS.COLOR = value
+        self.UI.setAttribute(id, 'text', value)
+    end
+    if (key == 'uiheight') then
+        local n = tonumber(value)
+        if (n ~= nil) then
+            currentconfig.SHIELDS.UIHEIGHT = n
+            self.UI.setAttribute(id, 'text', n)
+        else
+            self.UI.setAttribute(id, 'text', value)
+        end
+    end
+    if (key == 'critcolor') then
+        currentconfig.SHIELDS.CRITCOLOR = value
+        self.UI.setAttribute(id, 'text', value)
+    end
+    if (key == 'automode') then
+        currentconfig.SHIELDS.AUTOMODE = not(currentconfig.SHIELDS.AUTOMODE)
+        if (currentconfig.SHIELDS.AUTOMODE) then
+            self.UI.setAttribute(id, 'image', 'ui_checkon')
+        else
+            self.UI.setAttribute(id, 'image', 'ui_checkoff')
+        end
+    end
+end
+
+
 --MOVEMENT
 
 function ui_movemode(player, val)
@@ -981,6 +1085,8 @@ function ui_movedefinitions(player, value, id)
         rebuildUI()
     end
 end
+
+
 
 function ui_meta_toggle(player, value, id)
     local n = metaconfig[value]
@@ -1289,8 +1395,8 @@ function rebuildUI()
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Blue|Blue|#808080|#40404040', onClick='ui_arc_setcolor(#1f87ff)'}},
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Purple|Purple|#808080|#40404040', onClick='ui_arc_setcolor(#a020f0)'}},
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Pink|Pink|#808080|#40404040', onClick='ui_arc_setcolor(#f570ce)'}},
-                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_arc_setcolor(#aaaaaa)'}},
-                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_arc_setcolor(#191919)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_arc_setcolor(#191919)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_arc_setcolor(#aaaaaa)'}},
                         }}
                     }},
                 }}
@@ -1324,8 +1430,8 @@ function rebuildUI()
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Blue|Blue|#808080|#40404040', onClick='ui_arc_setcolor(#1f87ff)'}},
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Purple|Purple|#808080|#40404040', onClick='ui_arc_setcolor(#a020f0)'}},
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Pink|Pink|#808080|#40404040', onClick='ui_arc_setcolor(#f570ce)'}},
-                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_arc_setcolor(#aaaaaa)'}},
-                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_arc_setcolor(#191919)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_arc_setcolor(#191919)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_arc_setcolor(#aaaaaa)'}},
                         }}
                     }},
                 }}
@@ -1372,8 +1478,8 @@ function rebuildUI()
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Blue|Blue|#808080|#40404040', onClick='ui_arc_setcolor(#1f87ff)'}},
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Purple|Purple|#808080|#40404040', onClick='ui_arc_setcolor(#a020f0)'}},
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Pink|Pink|#808080|#40404040', onClick='ui_arc_setcolor(#f570ce)'}},
-                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_arc_setcolor(#aaaaaa)'}},
-                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_arc_setcolor(#191919)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_arc_setcolor(#191919)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_arc_setcolor(#aaaaaa)'}},
                         }}
                     }},
                     {tag='HorizontalLayout', attributes={spacing='5'}, children={
@@ -1458,8 +1564,8 @@ function rebuildUI()
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Blue|Blue|#808080|#40404040', onClick='ui_flag_setcolor(#1f87ff)'}},
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Purple|Purple|#808080|#40404040', onClick='ui_flag_setcolor(#a020f0)'}},
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Pink|Pink|#808080|#40404040', onClick='ui_flag_setcolor(#f570ce)'}},
-                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_flag_setcolor(#aaaaaa)'}},
-                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_flag_setcolor(#191919)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_flag_setcolor(#191919)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_flag_setcolor(#aaaaaa)'}},
                         }}
                     }},
                 }}
@@ -1519,8 +1625,8 @@ function rebuildUI()
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Blue|Blue|#808080|#40404040', onClick='ui_geometry_setcolor(#1f87ff)'}},
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Purple|Purple|#808080|#40404040', onClick='ui_geometry_setcolor(#a020f0)'}},
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Pink|Pink|#808080|#40404040', onClick='ui_geometry_setcolor(#f570ce)'}},
-                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_geometry_setcolor(#aaaaaa)'}},
-                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_geometry_setcolor(#191919)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_geometry_setcolor(#191919)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_geometry_setcolor(#aaaaaa)'}},
                         }}
                     }},
                 }}
@@ -1626,8 +1732,8 @@ function rebuildUI()
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Blue|Blue|#808080|#40404040', onClick='ui_movement_setcolor(#1f87ff)'}},
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Purple|Purple|#808080|#40404040', onClick='ui_movement_setcolor(#a020f0)'}},
                             {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Pink|Pink|#808080|#40404040', onClick='ui_movement_setcolor(#f570ce)'}},
-                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_movement_setcolor(#aaaaaa)'}},
-                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_movement_setcolor(#191919)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_movement_setcolor(#191919)'}},
+                            {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_movement_setcolor(#aaaaaa)'}},
                         }}
                     }},
                 }}
@@ -1671,13 +1777,6 @@ function rebuildUI()
                     {tag='Text', attributes={preferredWidth = 1000, alignment='UpperLeft', fontSize='24', text='Module: Movement', onClick='ui_togglesection(movement)'}},
                     {tag='Button', attributes={minWidth=30, preferredWidth=30, image=(currentconfig.MODULE_MOVEMENT and 'ui_checkon' or 'ui_checkoff'), onClick='toggle_module(MOVEMENT)', id='module_toggle_movement'}},
                 }},
-                {tag='Text', attributes={text='Mode'}},
-                {tag='HorizontalLayout', attributes={spacing='5'}, children={
-                    {tag='ToggleButton', attributes={onClick='ui_movemode('..const.SIMPLEGAUGE..')', text='Simple Gauge', isOn=(currentconfig.MOVEMENT.MODE == const.SIMPLEGAUGE)}},
-                    {tag='ToggleButton', attributes={onClick='ui_movemode('..const.RADIUS..')', text='Radius Limit', isOn=(currentconfig.MOVEMENT.MODE == const.RADIUS)}},
-                    {tag='ToggleButton', attributes={onClick='ui_movemode('..const.COMPLEXGAUGE..')', text='Complex Gauge', isOn=(currentconfig.MOVEMENT.MODE == const.COMPLEXGAUGE)}},
-                    {tag='ToggleButton', attributes={onClick='ui_movemode('..const.DEFINED..')', text='Pre-Defined', isOn=(currentconfig.MOVEMENT.MODE == const.DEFINED)}},
-                }},
                 {tag='HorizontalLayout', attributes={spacing='5', childForceExpandHeight=false}, children={
                     {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth = 1, childForceExpandHeight=false}, children={
                         {tag='Text', attributes={text='UI Offset'}},
@@ -1691,7 +1790,218 @@ function rebuildUI()
                         }}
                     }},
                 }},
+                {tag='Text', attributes={text='Mode'}},
+                {tag='HorizontalLayout', attributes={spacing='5'}, children={
+                    {tag='ToggleButton', attributes={onClick='ui_movemode('..const.SIMPLEGAUGE..')', text='Simple Gauge', isOn=(currentconfig.MOVEMENT.MODE == const.SIMPLEGAUGE)}},
+                    {tag='ToggleButton', attributes={onClick='ui_movemode('..const.RADIUS..')', text='Radius Limit', isOn=(currentconfig.MOVEMENT.MODE == const.RADIUS)}},
+                    {tag='ToggleButton', attributes={onClick='ui_movemode('..const.COMPLEXGAUGE..')', text='Complex Gauge', isOn=(currentconfig.MOVEMENT.MODE == const.COMPLEXGAUGE)}},
+                    {tag='ToggleButton', attributes={onClick='ui_movemode('..const.DEFINED..')', text='Pre-Defined', isOn=(currentconfig.MOVEMENT.MODE == const.DEFINED)}},
+                }},
                 moveOptions
+            }}
+        end
+
+
+        local shieldsPanel = {tag='VerticalLayout', attributes={spacing='5', flexibleHeight=0, padding='5 5 5 5', color='black'}, children={
+            {tag='HorizontalLayout', attributes={preferredHeight=30}, children={
+                {tag='Text', attributes={preferredWidth = 1000, alignment='UpperLeft', fontSize='24', text='Module: Shields', onClick='ui_togglesection(shields)'}},
+                {tag='Button', attributes={minWidth=30, preferredWidth=30, image=(currentconfig.MODULE_SHIELDS and 'ui_checkon' or 'ui_checkoff'), onClick='toggle_module(SHIELDS)', id='module_toggle_shields'}},
+            }},
+        }}
+        if (sectionVis.shields) then
+            local shieldsOptions = {}
+            if (currentconfig.SHIELDS.SHAPE == const.SHIELD_FRONTBACK) then
+                shieldsOptions = {tag='TableLayout', attributes={columnWidths = '0 0 0 0', preferredHeight = '120'}, children = {
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Direction'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Value'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Limit'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Critical'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Front'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=currentconfig.SHIELDS.CURRENT[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_1', text=currentconfig.SHIELDS.LIMIT[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=currentconfig.SHIELDS.CRITICAL[1], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Back'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=currentconfig.SHIELDS.CURRENT[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_2', text=currentconfig.SHIELDS.LIMIT[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=currentconfig.SHIELDS.CRITICAL[2], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                }}
+            end
+            if (currentconfig.SHIELDS.SHAPE == const.SHIELD_LEFTRIGHT) then
+                shieldsOptions = {tag='TableLayout', attributes={columnWidths = '0 0 0 0', preferredHeight = '120'}, children = {
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Direction'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Value'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Limit'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Critical'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Left'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=currentconfig.SHIELDS.CURRENT[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_1', text=currentconfig.SHIELDS.LIMIT[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=currentconfig.SHIELDS.CRITICAL[1], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Right'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=currentconfig.SHIELDS.CURRENT[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_2', text=currentconfig.SHIELDS.LIMIT[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=currentconfig.SHIELDS.CRITICAL[2], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                }}
+            end
+            if (currentconfig.SHIELDS.SHAPE == const.SHIELD_FOURWAY) then
+                shieldsOptions = {tag='TableLayout', attributes={columnWidths = '0 0 0 0', preferredHeight = '200'}, children = {
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Direction'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Value'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Limit'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Critical'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Front'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=currentconfig.SHIELDS.CURRENT[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_1', text=currentconfig.SHIELDS.LIMIT[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=currentconfig.SHIELDS.CRITICAL[1], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Left'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=currentconfig.SHIELDS.CURRENT[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_2', text=currentconfig.SHIELDS.LIMIT[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=currentconfig.SHIELDS.CRITICAL[2], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Right'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_3', text=currentconfig.SHIELDS.CURRENT[3], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_3', text=currentconfig.SHIELDS.LIMIT[3], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_3', text=currentconfig.SHIELDS.CRITICAL[3], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Back'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_4', text=currentconfig.SHIELDS.CURRENT[4], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_4', text=currentconfig.SHIELDS.LIMIT[4], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_4', text=currentconfig.SHIELDS.CRITICAL[4], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                }}
+            end
+            if (currentconfig.SHIELDS.SHAPE == const.SHIELD_SIXWAY) then
+                shieldsOptions = {tag='TableLayout', attributes={columnWidths = '0 0 0 0', preferredHeight = '280'}, children = {
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Direction'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Value'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Limit'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Critical'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Front'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=currentconfig.SHIELDS.CURRENT[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_1', text=currentconfig.SHIELDS.LIMIT[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=currentconfig.SHIELDS.CRITICAL[1], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Front Left'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=currentconfig.SHIELDS.CURRENT[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_2', text=currentconfig.SHIELDS.LIMIT[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=currentconfig.SHIELDS.CRITICAL[2], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Front Right'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_3', text=currentconfig.SHIELDS.CURRENT[3], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_3', text=currentconfig.SHIELDS.LIMIT[3], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_3', text=currentconfig.SHIELDS.CRITICAL[3], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Back Left'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_4', text=currentconfig.SHIELDS.CURRENT[4], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_4', text=currentconfig.SHIELDS.LIMIT[4], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_4', text=currentconfig.SHIELDS.CRITICAL[4], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Back Right'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_5', text=currentconfig.SHIELDS.CURRENT[5], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_5', text=currentconfig.SHIELDS.LIMIT[5], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_5', text=currentconfig.SHIELDS.CRITICAL[5], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                    {tag='row', children={
+                        {tag='cell', children={{tag='text', attributes={text='Back'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_6', text=currentconfig.SHIELDS.CURRENT[6], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_6', text=currentconfig.SHIELDS.LIMIT[6], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_6', text=currentconfig.SHIELDS.CRITICAL[6], onEndEdit = 'ui_editshields'}}}},
+                    }},
+                }}
+            end
+
+            shieldsPanel = {tag='VerticalLayout', attributes={spacing='5', flexibleHeight=0, padding='5 5 5 5', color='black'}, children={
+                {tag='HorizontalLayout', attributes={preferredHeight=30}, children={
+                    {tag='Text', attributes={preferredWidth = 1000, alignment='UpperLeft', fontSize='24', text='Module: Shields', onClick='ui_togglesection(shields)'}},
+                    {tag='Button', attributes={minWidth=30, preferredWidth=30, image=(currentconfig.MODULE_SHIELDS and 'ui_checkon' or 'ui_checkoff'), onClick='toggle_module(SHIELDS)', id='module_toggle_shields'}},
+                }},
+                {tag='HorizontalLayout', attributes={spacing='5', childForceExpandHeight=false}, children={
+                    {tag='VerticalLayout', attributes={ flexibleWidth=1, preferredWidth = 100, childForceExpandHeight=false}, children={
+                        {tag='Text', attributes={text='UI Height'}},
+                        {tag='InputField', attributes={id='inp_shields_uiheight', text=currentconfig.SHIELDS.UIHEIGHT or '0.25', onEndEdit='ui_editshields', characterValidation='Decimal'}},
+                    }},
+                    {tag='VerticalLayout', attributes={ flexibleWidth=0, preferredWidth=100, childForceExpandWidth = false, childForceExpandHeight = false, childAlignment='MiddleCenter'}, children={
+                        {tag='Text', attributes={text='Auto-on'}},
+                        {tag='Button', attributes={minWidth=30, preferredHeight=30, preferredWidth=30, image=((currentconfig.SHIELDS.AUTOMODE or false) and 'ui_checkon' or 'ui_checkoff'), onClick='ui_editshields', id='inp_shield_automode'}},
+                    }},
+                    {tag='VerticalLayout', attributes={ flexibleWidth=1, preferredWidth = 400, childForceExpandHeight=false}, children={
+                        {tag='Text', attributes={text='Limit Behaviour'}},
+                        {tag='HorizontalLayout', attributes={spacing='5'}, children={
+                            {tag='ToggleButton', attributes={onClick='ui_shieldslimitmode('..const.SHIELD_CAPATLIMIT..')', text='Cap at Limit', isOn=(currentconfig.SHIELDS.LIMITMODE == const.SHIELD_CAPATLIMIT)}},
+                            {tag='ToggleButton', attributes={onClick='ui_shieldslimitmode('..const.SHIELD_WRAPAROUND..')', text='Wrap Around', isOn=(currentconfig.SHIELDS.LIMITMODE == const.SHIELD_WRAPAROUND)}},
+                            {tag='ToggleButton', attributes={onClick='ui_shieldslimitmode('..const.SHIELD_IGNORELIMIT..')', text='Ignore Limit', isOn=(currentconfig.SHIELDS.LIMITMODE == const.SHIELD_IGNORELIMIT)}},
+                        }},
+                    }},
+                }},
+                {tag='VerticalLayout', attributes={ childForceExpandHeight=false }, children={
+                    {tag='Text', attributes={text='Normal Color'}},
+                    {tag='HorizontalLayout', attributes={flexibleWidth=0, preferredHeight='40', spacing=5, childForceExpandWidth = false}, children={
+                        {tag='InputField', attributes={id='inp_shields_color', flexibleWidth=1, text=currentconfig.SHIELDS.COLOR, onEndEdit='ui_editshields'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='White|White|#808080|#40404040', onClick='ui_shields_setcolor(#ffffff)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Brown|Brown|#808080|#40404040', onClick='ui_shields_setcolor(#713b17)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Red|Red|#808080|#40404040', onClick='ui_shields_setcolor(#da1918)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Orange|Orange|#808080|#40404040', onClick='ui_shields_setcolor(#f4641d)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Yellow|Yellow|#808080|#40404040', onClick='ui_shields_setcolor(#e7e52c)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Green|Green|#808080|#40404040', onClick='ui_shields_setcolor(#31b32b)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Teal|Teal|#808080|#40404040', onClick='ui_shields_setcolor(#21b19b)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Blue|Blue|#808080|#40404040', onClick='ui_shields_setcolor(#1f87ff)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Purple|Purple|#808080|#40404040', onClick='ui_shields_setcolor(#a020f0)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Pink|Pink|#808080|#40404040', onClick='ui_shields_setcolor(#f570ce)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_shields_setcolor(#191919)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_shields_setcolor(#aaaaaa)'}},
+                    }}
+                }},
+                {tag='VerticalLayout', attributes={ childForceExpandHeight=false }, children={
+                    {tag='Text', attributes={text='Critical Color'}},
+                    {tag='HorizontalLayout', attributes={flexibleWidth=0, preferredHeight='40', spacing=5, childForceExpandWidth = false}, children={
+                        {tag='InputField', attributes={id='inp_shields_critcolor', flexibleWidth=1, text=currentconfig.SHIELDS.CRITCOLOR, onEndEdit='ui_editshields'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='White|White|#808080|#40404040', onClick='ui_shields_setcritcolor(#ffffff)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Brown|Brown|#808080|#40404040', onClick='ui_shields_setcritcolor(#713b17)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Red|Red|#808080|#40404040', onClick='ui_shields_setcritcolor(#da1918)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Orange|Orange|#808080|#40404040', onClick='ui_shields_setcritcolor(#f4641d)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Yellow|Yellow|#808080|#40404040', onClick='ui_shields_setcritcolor(#e7e52c)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Green|Green|#808080|#40404040', onClick='ui_shields_setcritcolor(#31b32b)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Teal|Teal|#808080|#40404040', onClick='ui_shields_setcritcolor(#21b19b)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Blue|Blue|#808080|#40404040', onClick='ui_shields_setcritcolor(#1f87ff)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Purple|Purple|#808080|#40404040', onClick='ui_shields_setcritcolor(#a020f0)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Pink|Pink|#808080|#40404040', onClick='ui_shields_setcritcolor(#f570ce)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Black|Black|#808080|#40404040', onClick='ui_shields_setcritcolor(#191919)'}},
+                        {tag='Button', attributes={image='ui_drop', preferredWidth='40', colors='Grey|Grey|#808080|#40404040', onClick='ui_shields_setcritcolor(#aaaaaa)'}},
+                    }}
+                }},
+                {tag='Text', attributes={text='Shape'}},
+                {tag='HorizontalLayout', attributes={spacing='5'}, children={
+                    {tag='ToggleButton', attributes={onClick='ui_shieldsshape('..const.SHIELD_FRONTBACK..')', text='Fore/Aft', isOn=(currentconfig.SHIELDS.SHAPE == const.SHIELD_FRONTBACK)}},
+                    {tag='ToggleButton', attributes={onClick='ui_shieldsshape('..const.SHIELD_LEFTRIGHT..')', text='Left/Right', isOn=(currentconfig.SHIELDS.SHAPE == const.SHIELD_LEFTRIGHT)}},
+                    {tag='ToggleButton', attributes={onClick='ui_shieldsshape('..const.SHIELD_FOURWAY..')', text='4-Way', isOn=(currentconfig.SHIELDS.SHAPE == const.SHIELD_FOURWAY)}},
+                    {tag='ToggleButton', attributes={onClick='ui_shieldsshape('..const.SHIELD_SIXWAY..')', text='6-Way', isOn=(currentconfig.SHIELDS.SHAPE == const.SHIELD_SIXWAY)}},
+                }},
+                shieldsOptions
             }}
         end
 
@@ -1710,7 +2020,7 @@ function rebuildUI()
                         updateMe,
                         {tag='button', attributes={onClick='ui_setmode(SETTINGS)', image='ui_gear', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', preferredWidth='60', height='60', flexibleWidth=0}}
                     }},
-                    basePanel,presetPanel,permViewPanel,permEditPanel,barsPanel,markersPanel,arcPanel,flagPanel,geometryPanel,movementPanel
+                    basePanel,presetPanel,permViewPanel,permEditPanel,barsPanel,markersPanel,arcPanel,flagPanel,geometryPanel,movementPanel,shieldsPanel
                 }}
             }
         })
@@ -1807,10 +2117,17 @@ function checkForUpdate()
     end)
 end
 
+
 function onLoad(save)
 
     local data = JSON.decode(save) or {config = currentconfig, presets = {}}
-    currentconfig = data.config or currentconfig
+    local cfg = data.config
+    for i,v in pairs(currentconfig) do
+        if (cfg[i] == nil) then
+            cfg[i] = v
+        end
+    end
+    currentconfig = cfg
     metaconfig = data.metaconfig or metaconfig
     currentpresets = data.presets or {}
     if (metaconfig.UPDATECHECK) then

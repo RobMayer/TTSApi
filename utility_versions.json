@@ -5,6 +5,12 @@
         ]}
     ],
     "mini.injector":[
+        {"version": "3.2.0a10", "changes":[
+            "Shield Update"
+        ]},
+        {"version": "3.1.1", "changes":[
+            "Arc Collider Fix"
+        ]},
         {"version": "3.1.0", "changes":[
             "Controller Compatibility"
         ]}
