@@ -31,6 +31,9 @@ namespace handlers {
             if ($input['MODULE_FLAG']) {
             	$res .= "local flag_active = false;";
             }
+            if ($input['MODULE_SHIELDS']) {
+            	$res .= "local shields_active = false;";
+            }
 
             if ($input['MODULE_MOVEMENT']) {
 
@@ -105,6 +108,7 @@ namespace handlers {
             	if ($input['MODULE_MARKERS']) { $res .= "data.markers=state.markers\n"; }
             	if ($input['MODULE_FLAG']) { $res .= "data.flag=state.flag\n"; }
             	if ($input['MODULE_GEOMETRY']) { $res .= "data.geometry=state.geometry\n"; }
+            	if ($input['MODULE_SHIELDS']) { $res .= "data.shields=state.shields\n"; }
             	$res .= "return JSON.encode(data)\n";
             $res .= "end\n";
 
@@ -116,6 +120,7 @@ namespace handlers {
             if ($input['MODULE_MARKERS']) { $res .= "state.markers = save.markers or {}\n"; }
             if ($input['MODULE_FLAG']) { $res .= "state.flag = save.flag or {}\nflag_active = state.flag.automode or false\n"; }
             if ($input['MODULE_GEOMETRY']) { $res .= "state.geometry = save.geometry or {}\nstate.geometry.material = state.geometry.material or 0\nspawnGeometry()\n"; }
+            if ($input['MODULE_SHIELDS']) { $res .= "state.shields = save.shields or {}\nshields_active = state.shields.automode or false\n"; }
 
             $res .= "rebuildAssets()
             	Wait.frames(rebuildUI, ".($input['REFRESH'] ?? $DEFAULT_REFRESH).")
@@ -663,27 +668,27 @@ namespace handlers {
             	$res .= "function editFlag(data)
             	    if (data.image ~= nil) then
             			state.flag.image = data.image
-            	        self.UI.setAttribute('inp_flag_image', 'value', data.image)
+            	        self.UI.setAttribute('inp_flag_image', 'text', data.image)
             	    end
             	    if (data.width ~= nil) then
             	        local n = tonumber(data.width)
             	        if (n ~= nil) then
             	            state.flag.width = n
             	        end
-            	        self.UI.setAttribute('inp_flag_width', 'value', data.width)
+            	        self.UI.setAttribute('inp_flag_width', 'text', data.width)
             	    end
             	    if (data.height ~= nil) then
             	        local n = tonumber(data.height)
             	        if (n ~= nil) then
             	            state.flag.height = n
             	        end
-            	        self.UI.setAttribute('inp_flag_height', 'value', data.height)
+            	        self.UI.setAttribute('inp_flag_height', 'text', data.height)
             	    end
             	    if (data.color ~= nil) then
             	        if (string.len(data.color) == 7 and string.sub(data.color, 1, 1) == '#') then
             	            state.flag.color = data.color
             	        end
-            	        self.UI.setAttribute('inp_flag_color', 'value', data.color)
+            	        self.UI.setAttribute('inp_flag_color', 'text', data.color)
             	    end
             	    if (data.automode ~= nil) then
             	        state.flag.automode = data.automode
@@ -693,13 +698,13 @@ namespace handlers {
             	end\n";
             	$res .= "function clearFlag()
             		state.flag.image = nil
-            		self.UI.setAttribute('inp_flag_image', 'value', '')
+            		self.UI.setAttribute('inp_flag_image', 'text', '')
             		state.flag.width = 0
-            		self.UI.setAttribute('inp_flag_width', 'value', 0)
+            		self.UI.setAttribute('inp_flag_width', 'text', 0)
             		state.flag.height = 0
-            		self.UI.setAttribute('inp_flag_height', 'value', 0)
+            		self.UI.setAttribute('inp_flag_height', 'text', 0)
             		state.flag.color = '#ffffff'
-            		self.UI.setAttribute('inp_flag_color', 'value', '#ffffff')
+            		self.UI.setAttribute('inp_flag_color', 'text', '#ffffff')
             		state.flag.automode = false
             		self.UI.setAttribute('inp_flag_automode', 'isOn', false)
             	end\n";
@@ -805,6 +810,7 @@ namespace handlers {
             	end\n";
 
             	$res .= "function ui_popmarker(player,value) popMarker({index=value}) end\n";
+            	$res .= "function ui_clearmarkers(player) clearMarkers() end\n";
 
             } else {
             	$res .= "function addMarker(a) end;\n";
@@ -1006,6 +1012,181 @@ namespace handlers {
             	$res .= "function clearBars(data) end\n";
             }
 
+            if ($input['MODULE_SHIELDS']) {
+
+                $sc = "2";
+                if ($input['SHIELDS']['SHAPE'] == 1) { $sc = "2"; }
+                if ($input['SHIELDS']['SHAPE'] == 2) { $sc = "2"; }
+                if ($input['SHIELDS']['SHAPE'] == 3) { $sc = "4"; }
+                if ($input['SHIELDS']['SHAPE'] == 4) { $sc = "6"; }
+
+                $cc = "";
+                if ($input['SHIELDS']['LIMITMODE'] == 1) {
+                    $cc = "local cur = state.shields.current[idx]
+                    local min = state.shields.minimum[idx]
+                    local max = state.shields.maximum[idx]
+                    local crt = state.shields.critical[idx]
+                    max = math.max(min, max)
+                    min = math.min(max, min)
+                    cur = math.max(math.min(cur, max), min)
+                    state.shields.current[idx] = cur
+                    state.shields.minimum[idx] = min
+                    state.shields.maximum[idx] = max
+                    state.shields.critical[idx] = crt
+                    self.UI.setAttribute('dsp_shields_'..idx, 'text', cur)
+                    self.UI.setAttribute('inp_shields_current_'..idx, 'value', cur)
+                    self.UI.setAttribute('inp_shields_minimum_'..idx, 'value', min)
+                    self.UI.setAttribute('inp_shields_maximum_'..idx, 'value', max)
+                    self.UI.setAttribute('inp_shields_critical_'..idx, 'value', crt)
+                    if (cur <= crt) then
+                        self.UI.setAttribute('dsp_shields_'..idx, 'color', state.shields.critcolor)
+                    else
+                        self.UI.setAttribute('dsp_shields_'..idx, 'color', state.shields.color)
+                    end
+                    ";
+                }
+                if ($input['SHIELDS']['LIMITMODE'] == 2) {
+                    $cc = "local cur = state.shields.current[idx]
+                    local min = state.shields.minimum[idx]
+                    local max = state.shields.maximum[idx]
+                    local crt = state.shields.critical[idx]
+                    max = math.max(min, max)
+                    min = math.min(max, min)
+                    if (cur > max) then cur = min end
+                    if (cur < min) then cur = max end
+                    state.shields.current[idx] = cur
+                    state.shields.minimum[idx] = min
+                    state.shields.maximum[idx] = max
+                    state.shields.critical[idx] = crt
+                    self.UI.setAttribute('dsp_shields_'..idx, 'text', cur)
+                    self.UI.setAttribute('inp_shields_current_'..idx, 'value', cur)
+                    self.UI.setAttribute('inp_shields_minimum_'..idx, 'value', min)
+                    self.UI.setAttribute('inp_shields_maximum_'..idx, 'value', max)
+                    self.UI.setAttribute('inp_shields_critical_'..idx, 'value', crt)
+                    if (cur <= crt) then
+                        self.UI.setAttribute('dsp_shields_'..idx, 'color', state.shields.critcolor)
+                    else
+                        self.UI.setAttribute('dsp_shields_'..idx, 'color', state.shields.color)
+                    end
+                    ";
+                }
+                if ($input['SHIELDS']['LIMITMODE'] == 3) {
+                    $cc = "local cur = state.shields.current[idx]
+                    local max = state.shields.maximum[idx]
+                    local min = state.shields.minimum[idx]
+                    local crt = state.shields.critical[idx]
+                    max = math.max(min, max)
+                    min = math.min(max, min)
+                    state.shields.current[idx] = cur
+                    state.shields.minimum[idx] = min
+                    state.shields.maximum[idx] = max
+                    state.shields.critical[idx] = crt
+                    self.UI.setAttribute('dsp_shields_'..idx, 'text', cur)
+                    self.UI.setAttribute('inp_shields_current_'..idx, 'text', cur)
+                    self.UI.setAttribute('inp_shields_minimum_'..idx, 'text', min)
+                    self.UI.setAttribute('inp_shields_maximum_'..idx, 'text', max)
+                    self.UI.setAttribute('inp_shields_critical_'..idx, 'text', crt)
+                    if (cur <= crt) then
+                        self.UI.setAttribute('dsp_shields_'..idx, 'color', state.shields.critcolor)
+                    else
+                        self.UI.setAttribute('dsp_shields_'..idx, 'color', state.shields.color)
+                    end
+                    ";
+                }
+
+                $res .= "function toggleShields()
+            		shields_active=not shields_active
+            		if shields_active then
+            			self.UI.show('shields_container')
+            		else
+            			self.UI.hide('shields_container')
+            		end
+            	end\n";
+            	$res .= "function ui_shields(a) toggleShields() end;\n";
+
+                $res .= "function editShields(data)
+                    if (data.color ~= nil) then
+                        self.UI.setAttribute('inp_shields_color', 'text', data.color)
+                        state.shields.color = data.color
+                    end
+                    if (data.critcolor ~= nil) then
+                        self.UI.setAttribute('inp_shields_critcolor', 'text', data.critcolor)
+                        state.shields.critcolor = data.critcolor
+                    end
+                    if (data.current ~= nil or data.minimum ~= nil or data.maximum ~= nil or data.critical ~= nil) then
+                        local index = tonumber(data.index or error('index is required when modifying shield direction values current, maximum, minimumum, or critical', 2)) or error('index must be numeric', 2)
+                        if (data.maximum ~= nil) then
+                            local c = tonumber(data.maximum) or error('maximum must be numeric')
+                            state.shields.maximum[index] = c
+                        end
+                        if (data.minimum ~= nil) then
+                            local c = tonumber(data.minimum) or error('minimum must be numeric')
+                            state.shields.minimum[index] = c
+                        end
+                        if (data.critical ~= nil) then
+                            local c = tonumber(data.critical) or error('critical must be numeric')
+                            state.shields.critical[index] = c
+                        end
+                        if (data.current ~= nil) then
+                            local c = tonumber(data.current) or error('current must be numeric')
+                            state.shields.current[index] = c
+                        end
+                    end
+                    for idx = 1,".$sc." do
+                        ".$cc."
+                    end
+                end\n";
+                $res .= "function adjustShield(data)
+                    local idx = tonumber(data.index or error('index is required', 2)) or error('index must be numeric', 2)
+                    local amt = tonumber(data.amount or error('amount is required', 2)) or error('amount must be numeric', 2)
+                    local cur = state.shields.current[idx]
+                    editShields({index=idx, current = cur + amt})
+                end\n";
+                $res .= "function getShieldShape()
+                    return ".$input['SHIELDS']['SHAPE']."
+                end\n";
+                $res .= "function ui_editshields(player, value, id)
+                    local args = {}
+                    for a in string.gmatch(id, '([^%_]+)') do
+                        table.insert(args,a)
+                    end
+                    local key = args[3]
+                    if (key == 'current' or key == 'maximum' or key == 'minimum' or key == 'critical') then
+                        local index = tonumber(args[4]) or error('index is required when modifying current, minimum, maximum, or critical')
+                        editShields({index=index, [key] = value})
+                    end
+                    if (key == 'color') then
+                        editShields({color = value})
+                    end
+                    if (key == 'critcolor') then
+                        editShields({critcolor = value})
+                    end
+                end\n";
+                $res .= "function ui_adjshield(player, button, id)
+                    local args = {}
+                    for a in string.gmatch(id, '([^%_]+)') do
+                        table.insert(args,a)
+                    end
+                    local index = tonumber(args[3])
+                    local amount = -1
+                    if (button == '-2') then
+                        amount = 1
+                    end
+                    adjustShield({index=index,amount=amount})
+                end\n";
+                $res .= "function ui_shields_setcolor(player, value, id)
+                    ui_editshields(player, value, 'inp_shields_color')
+                end\n";
+                $res .= "function ui_shields_setcritcolor(player, value, id)
+                    ui_editshields(player, value, 'inp_shields_critcolor')
+                end\n";
+            } else {
+                $res .= "function setShield(data) end\n";
+                $res .= "function adjustShield(data) end\n";
+                $res .= "function getShieldShape() return 0 end\n";
+                $res .= "function toggleShields() end\n";
+            }
+
             //REBUILD ASSETS
             $res .= "function rebuildAssets()
             	local root = 'https://raw.githubusercontent.com/RobMayer/TTSLibrary/master/ui/';
@@ -1031,6 +1212,7 @@ namespace handlers {
                     {name='ui_cube', url=root..'cube.png'},
                     {name='movenode', url=root..'movenode.png'},
                     {name='moveland', url=root..'moveland.png'},
+                    {name='ui_shield', url=root..'shield.png'},
                 }
             	assetBuffer = {}
             	local bufLen = 0
@@ -1093,6 +1275,10 @@ namespace handlers {
         	}
         	if ($input['MODULE_MOVEMENT']) {
         		$res .= "table.insert(mainButtons, {tag='button', attributes={id='btn_move_toggle', active=moveActive, height='30', width='30', rectAlignment='MiddleLeft', image='ui_splitpath', offsetXY=mainButtonX..' 0', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', onClick='ui_move', visibility=PERMEDIT}});\n";
+        		$res .= "mainButtonX = mainButtonX + 30;\n";
+        	}
+            if ($input['MODULE_SHIELDS']) {
+        		$res .= "table.insert(mainButtons, {tag='button', attributes={id='btn_shield_toggle', height='30', width='30', rectAlignment='MiddleLeft', image='ui_shield', offsetXY=mainButtonX..' 0', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', onClick='ui_shields', visibility=PERMEDIT}});\n";
         		$res .= "mainButtonX = mainButtonX + 30;\n";
         	}
         	if (($input['MODULE_FLAG'] && !$input['LOCK_FLAG']) || $input['MODULE_BARS'] || $input['MODULE_MARKERS'] || ($input['MODULE_GEOMETRY'] && !$input['LOCK_GEOMETRY'])) {
@@ -1318,11 +1504,209 @@ namespace handlers {
         		}
         	}
 
+            if ($input['MODULE_SHIELDS']) {
+
+                $shieldOption = "";
+                if ($input['SHIELDS']['SHAPE'] == 1) { // Fore/Rear
+                    $shieldOption = "{tag='TableLayout', attributes={columnWidths = '0 0 0 0', preferredHeight = '90'}, children = {
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Direction'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Value'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Minimum'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Maximum'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Critical'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Front'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=state.shields.current[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_1', text=state.shields.minimum[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_1', text=state.shields.maximum[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=state.shields.critical[1], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Back'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=state.shields.current[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_2', text=state.shields.minimum[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_2', text=state.shields.maximum[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=state.shields.critical[2], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                    }}";
+                }
+                if ($input['SHIELDS']['SHAPE'] == 2) { // Left/Right
+                    $shieldOption = "{tag='TableLayout', attributes={columnWidths = '0 0 0 0', preferredHeight = '90'}, children = {
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Direction'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Value'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Minimum'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Maximum'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Critical'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Left'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=state.shields.current[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_1', text=state.shields.minimum[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_1', text=state.shields.maximum[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=state.shields.critical[1], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Right'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=state.shields.current[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_2', text=state.shields.minimum[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_2', text=state.shields.maximum[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=state.shields.critical[2], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                    }}";
+                }
+                if ($input['SHIELDS']['SHAPE'] == 3) { // 4-Way
+                    $shieldOption = "{tag='TableLayout', attributes={columnWidths = '0 0 0 0', preferredHeight = '150'}, children = {
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Direction'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Value'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Minimum'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Maximum'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Critical'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Front'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=state.shields.current[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_1', text=state.shields.minimum[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_1', text=state.shields.maximum[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=state.shields.critical[1], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Left'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=state.shields.current[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_2', text=state.shields.minimum[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_2', text=state.shields.maximum[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=state.shields.critical[2], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Right'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_3', text=state.shields.current[3], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_3', text=state.shields.minimum[3], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_3', text=state.shields.maximum[3], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_3', text=state.shields.critical[3], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Back'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_4', text=state.shields.current[4], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_4', text=state.shields.minimum[4], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_4', text=state.shields.maximum[4], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_4', text=state.shields.critical[4], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                    }}";
+                }
+                if ($input['SHIELDS']['SHAPE'] == 4) { // 6-Way
+                    $shieldOption = "{tag='TableLayout', attributes={columnWidths = '0 0 0 0', preferredHeight = '210', flexibleHeight=0,}, children = {
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Direction'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Value'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Minimum'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Maximum'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Critical'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Front'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=state.shields.current[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_1', text=state.shields.minimum[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_1', text=state.shields.maximum[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=state.shields.critical[1], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Front Left'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=state.shields.current[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_2', text=state.shields.minimum[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_2', text=state.shields.maximum[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=state.shields.critical[2], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Front Right'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_3', text=state.shields.current[3], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_3', text=state.shields.minimum[3], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_3', text=state.shields.maximum[3], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_3', text=state.shields.critical[3], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Back Left'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_4', text=state.shields.current[4], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_4', text=state.shields.minimum[4], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_4', text=state.shields.maximum[4], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_4', text=state.shields.critical[4], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Back Right'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_5', text=state.shields.current[5], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_5', text=state.shields.minimum[5], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_5', text=state.shields.maximum[5], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_5', text=state.shields.critical[5], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                        {tag='row', children={
+                            {tag='cell', children={{tag='text', attributes={color='white', text='Back'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_6', text=state.shields.current[6], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_6', text=state.shields.minimum[6], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_6', text=state.shields.maximum[6], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_6', text=state.shields.critical[6], onEndEdit = 'ui_editshields'}}}},
+                        }},
+                    }}";
+                }
+
+                $settingsChildren[] = "{tag='panel',
+                    attributes={id='ui_settings_geometry',offsetXY='0 40',height='400',rectAlignment='LowerCenter',color='black',active=ui_mode=='shields'},
+                    children={
+                        {tag='VerticalLayout', attributes={width=640,height='340',spacing='5',rectAlignment='UpperCenter',offsetXY='0 -30',childForceExpandHeight=false,padding='5 5 5 5'},
+                            children={
+                                {tag='VerticalLayout', attributes={ childForceExpandHeight=false, flexibleHeight=0, }, children={
+                                    {tag='Text', attributes={color='white', text='Normal Color'}},
+                                    {tag='HorizontalLayout', attributes={flexibleWidth=0, preferredHeight='30', spacing=5, childForceExpandWidth = false}, children={
+                                        {tag='InputField', attributes={id='inp_shields_color', flexibleWidth=1, text=state.shields.color, onEndEdit='ui_editshields'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='White|White|#808080|#40404040', onClick='ui_shields_setcolor(#ffffff)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Brown|Brown|#808080|#40404040', onClick='ui_shields_setcolor(#713b17)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Red|Red|#808080|#40404040', onClick='ui_shields_setcolor(#da1918)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Orange|Orange|#808080|#40404040', onClick='ui_shields_setcolor(#f4641d)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Yellow|Yellow|#808080|#40404040', onClick='ui_shields_setcolor(#e7e52c)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Green|Green|#808080|#40404040', onClick='ui_shields_setcolor(#31b32b)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Teal|Teal|#808080|#40404040', onClick='ui_shields_setcolor(#21b19b)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Blue|Blue|#808080|#40404040', onClick='ui_shields_setcolor(#1f87ff)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Purple|Purple|#808080|#40404040', onClick='ui_shields_setcolor(#a020f0)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Pink|Pink|#808080|#40404040', onClick='ui_shields_setcolor(#f570ce)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Black|Black|#808080|#40404040', onClick='ui_shields_setcolor(#191919)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Grey|Grey|#808080|#40404040', onClick='ui_shields_setcolor(#aaaaaa)'}},
+                                    }}
+                                }},
+                                {tag='VerticalLayout', attributes={ childForceExpandHeight=false, flexibleHeight=0, }, children={
+                                    {tag='Text', attributes={color='white', text='Critical Color'}},
+                                    {tag='HorizontalLayout', attributes={flexibleWidth=0, preferredHeight='30', spacing=5, childForceExpandWidth = false}, children={
+                                        {tag='InputField', attributes={id='inp_shields_critcolor', flexibleWidth=1, text=state.shields.critcolor, onEndEdit='ui_editshields'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='White|White|#808080|#40404040', onClick='ui_shields_setcritcolor(#ffffff)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Brown|Brown|#808080|#40404040', onClick='ui_shields_setcritcolor(#713b17)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Red|Red|#808080|#40404040', onClick='ui_shields_setcritcolor(#da1918)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Orange|Orange|#808080|#40404040', onClick='ui_shields_setcritcolor(#f4641d)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Yellow|Yellow|#808080|#40404040', onClick='ui_shields_setcritcolor(#e7e52c)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Green|Green|#808080|#40404040', onClick='ui_shields_setcritcolor(#31b32b)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Teal|Teal|#808080|#40404040', onClick='ui_shields_setcritcolor(#21b19b)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Blue|Blue|#808080|#40404040', onClick='ui_shields_setcritcolor(#1f87ff)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Purple|Purple|#808080|#40404040', onClick='ui_shields_setcritcolor(#a020f0)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Pink|Pink|#808080|#40404040', onClick='ui_shields_setcritcolor(#f570ce)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Black|Black|#808080|#40404040', onClick='ui_shields_setcritcolor(#191919)'}},
+                                        {tag='Button', attributes={image='ui_drop', preferredWidth='30', colors='Grey|Grey|#808080|#40404040', onClick='ui_shields_setcritcolor(#aaaaaa)'}},
+                                    }}
+                                }},
+                                ".$shieldOption.",
+
+                            }
+                        },
+                        {tag='text', attributes={fontSize='24',height='30',text='SHIELDS',color='#cccccc',rectAlignment='UpperLeft',alignment='MiddleCenter'} },
+                    }
+                }";
+                $settingsChildren[] = "{tag='button', attributes={height='40', width='40', rectAlignment='LowerLeft', image='ui_shield', offsetXY='".$settingsButtonX." 0', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', onClick='ui_setmode(shields)'}}";
+                $settingsButtonX += 40;
+            }
+
         	$mainChildren[] = "{tag='Panel',attributes={minHeight='30',flexibleHeight='0'}, children=mainButtons }";
 
 
         	//OVERHEAD!
-        	$res .= "local ui_overhead = { tag='Panel', attributes={childForceExpandHeight='false',visibility=PERMVIEW,position='0 0 ".($input['OVERHEAD_HEIGHT'] * -100)."',rotation=orient=='HORIZONTAL'and'0 0 0'or'-90 0 0',active=ui_mode=='0',scale='".($input['UI_SCALE'])." ".($input['UI_SCALE'])." ".($input['UI_SCALE'])."',height=0,color='red',width=w},
+        	$res .= "local ui_overhead = { tag='Panel', attributes={childForceExpandHeight='false',visibility=PERMVIEW,position='0 ".($input['OVERHEAD_OFFSET'] * -100)." ".($input['OVERHEAD_HEIGHT'] * -100)."',rotation=orient=='HORIZONTAL'and'0 0 0'or'-90 0 0',active=ui_mode=='0',scale='".($input['UI_SCALE'])." ".($input['UI_SCALE'])." ".($input['UI_SCALE'])."',height=0,color='red',width=w},
         			children={
         				{tag='VerticalLayout',attributes={rectAlignment='LowerCenter',childAlignment='LowerCenter',childForceExpandHeight=false,childForceExpandWidth=true,height='5000',spacing='5'},
         					children={".implode(",", $mainChildren)."}
@@ -1333,7 +1717,7 @@ namespace handlers {
         	//SETTINGS!
         	if (!empty($settingsChildren)) {
         		$settingsChildren[] = "{tag='button', attributes={height='40', width='40', rectAlignment='LowerCenter', image='ui_close', offsetXY='0 0', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', onClick='ui_setmode(0)'}}";
-        		$res .= "local ui_settings = {tag='panel', attributes={id='ui_settings',height='0',width=640,position='0 0 ".($input['OVERHEAD_HEIGHT'] * -100)."',rotation=(orient=='HORIZONTAL'and'0 0 0'or'-90 0 0'),scale='".$input['UI_SCALE']." ".$input['UI_SCALE']." ".$input['UI_SCALE']."',active=(ui_mode ~= '0'),visibility=PERMEDIT},
+        		$res .= "local ui_settings = {tag='panel', attributes={id='ui_settings',height='0',width=640,position='0 ".($input['OVERHEAD_OFFSET'] * -100)." ".($input['OVERHEAD_HEIGHT'] * -100)."',rotation=(orient=='HORIZONTAL'and'0 0 0'or'-90 0 0'),scale='".$input['UI_SCALE']." ".$input['UI_SCALE']." ".$input['UI_SCALE']."',active=(ui_mode ~= '0'),visibility=PERMEDIT},
         			children={".implode(",", $settingsChildren)."}
         		}\n";
         	} else {
@@ -1550,7 +1934,250 @@ namespace handlers {
         		}
         	}
 
-        	$res .= "self.UI.setXmlTable({ui_overhead, ui_settings, ui_movement});\n";
+            $res .= "local ui_shields = {}\n";
+        	if ($input['MODULE_SHIELDS']) {
+                $sChild = "";
+                if ($input['SHIELDS']['SHAPE'] == 1) { //fore aft
+                    $sChild = "{
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 180'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_1',
+                                text=state.shields.current[1],
+                                color=((state.shields.current[1] > state.shields.critical[1]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    },
+                    {
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 0'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_2',
+                                text=state.shields.current[2],
+                                color=((state.shields.current[2] > state.shields.critical[2]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    }";
+                }
+                if ($input['SHIELDS']['SHAPE'] == 2) { //left right
+                    $sChild = "{
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 -90'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_1',
+                                text=state.shields.current[1],
+                                color=((state.shields.current[1] > state.shields.critical[1]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    },
+                    {
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 90'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_2',
+                                text=state.shields.current[2],
+                                color=((state.shields.current[2] > state.shields.critical[2]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    }";
+                }
+                if ($input['SHIELDS']['SHAPE'] == 3) { //quad
+                    $sChild = "{
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 180'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_1',
+                                text=state.shields.current[1],
+                                color=((state.shields.current[1] > state.shields.critical[1]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    },
+                    {
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 -90'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_2',
+                                text=state.shields.current[2],
+                                color=((state.shields.current[2] > state.shields.critical[2]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    },
+                    {
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 90'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_3',
+                                text=state.shields.current[3],
+                                color=((state.shields.current[3] > state.shields.critical[3]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    },
+                    {
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 0'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_4',
+                                text=state.shields.current[4],
+                                color=((state.shields.current[4] > state.shields.critical[4]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    }
+                    ";
+                }
+                if ($input['SHIELDS']['SHAPE'] == 4) { //hex
+                    $sChild = "{
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 180'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_1',
+                                text=state.shields.current[1],
+                                color=((state.shields.current[1] > state.shields.critical[1]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    },
+                    {
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 -120'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_2',
+                                text=state.shields.current[2],
+                                color=((state.shields.current[2] > state.shields.critical[2]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    },
+                    {
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 120'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_3',
+                                text=state.shields.current[3],
+                                color=((state.shields.current[3] > state.shields.critical[3]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    },
+                    {
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 -60'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_4',
+                                text=state.shields.current[4],
+                                color=((state.shields.current[4] > state.shields.critical[4]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    },
+                    {
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 60'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_5',
+                                text=state.shields.current[5],
+                                color=((state.shields.current[5] > state.shields.critical[5]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    },
+                    {
+                        tag='Panel', attributes={width='100%', height='100%', rotation='0 0 0'}, children={
+                            {tag='Text', attributes={
+                                id='dsp_shields_6',
+                                text=state.shields.current[6],
+                                color=((state.shields.current[6] > state.shields.critical[6]) and state.shields.color or state.shields.critcolor),
+                                width='50',
+                                height='50',
+                                fontSize='40',
+                                onClick='ui_adjshield',
+                                rectAlignment='LowerCenter',
+                                outline='black',
+                                outlineSize='2 2',
+                            }}
+                        }
+                    }
+                    ";
+                }
+
+                $res .= "ui_shields = {tag='Panel', attributes={id='shields_container', active=(shields_active == true), position='0 0 ".($input['SHIELDS']['UIHEIGHT']*-100)."', rectAlignment='MiddleCenter', width=".(($input['BASE_WIDTH']*100)+100).", height=".(($input['BASE_LENGTH']*100)+100)."},
+                    children = {".$sChild."}
+                }\n";
+            }
+
+        	$res .= "self.UI.setXmlTable({ui_shields, ui_movement, ui_overhead, ui_settings});\n";
 
             $res .= "end\n";
             return $res;
