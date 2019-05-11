@@ -1028,10 +1028,9 @@ namespace handlers {
                     local crt = state.shields.critical[idx]
                     max = math.max(min, max)
                     min = math.min(max, min)
-                    crt = math.max(math.min(crit, max), min)
                     cur = math.max(math.min(cur, max), min)
                     state.shields.current[idx] = cur
-                    state.shields.mimimum[idx] = min
+                    state.shields.minimum[idx] = min
                     state.shields.maximum[idx] = max
                     state.shields.critical[idx] = crt
                     self.UI.setAttribute('dsp_shields_'..idx, 'text', cur)
@@ -1053,7 +1052,6 @@ namespace handlers {
                     local crt = state.shields.critical[idx]
                     max = math.max(min, max)
                     min = math.min(max, min)
-                    crt = math.max(math.min(crit, max), min)
                     if (cur > max) then cur = min end
                     if (cur < min) then cur = max end
                     state.shields.current[idx] = cur
@@ -1079,7 +1077,6 @@ namespace handlers {
                     local crt = state.shields.critical[idx]
                     max = math.max(min, max)
                     min = math.min(max, min)
-                    crt = math.max(math.min(crit, max), min)
                     state.shields.current[idx] = cur
                     state.shields.minimum[idx] = min
                     state.shields.maximum[idx] = max
