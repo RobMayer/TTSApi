@@ -810,6 +810,7 @@ namespace handlers {
             	end\n";
 
             	$res .= "function ui_popmarker(player,value) popMarker({index=value}) end\n";
+            	$res .= "function ui_clearmarkers(player) clearMarkers() end\n";
 
             } else {
             	$res .= "function addMarker(a) end;\n";
@@ -1022,17 +1023,21 @@ namespace handlers {
                 $cc = "";
                 if ($input['SHIELDS']['LIMITMODE'] == 1) {
                     $cc = "local cur = state.shields.current[idx]
-                    local lim = state.shields.limit[idx]
+                    local min = state.shields.minimum[idx]
+                    local max = state.shields.maximum[idx]
                     local crt = state.shields.critical[idx]
-                    cur = math.max(math.min(cur, lim), 0)
-                    lim = math.max(1, lim)
-                    crt = math.max(0, crt)
+                    max = math.max(min, max)
+                    min = math.min(max, min)
+                    crt = math.max(math.min(crit, max), min)
+                    cur = math.max(math.min(cur, max), min)
                     state.shields.current[idx] = cur
-                    state.shields.limit[idx] = lim
+                    state.shields.mimimum[idx] = min
+                    state.shields.maximum[idx] = max
                     state.shields.critical[idx] = crt
                     self.UI.setAttribute('dsp_shields_'..idx, 'text', cur)
                     self.UI.setAttribute('inp_shields_current_'..idx, 'value', cur)
-                    self.UI.setAttribute('inp_shields_limit_'..idx, 'value', lim)
+                    self.UI.setAttribute('inp_shields_minimum_'..idx, 'value', min)
+                    self.UI.setAttribute('inp_shields_maximum_'..idx, 'value', max)
                     self.UI.setAttribute('inp_shields_critical_'..idx, 'value', crt)
                     if (cur <= crt) then
                         self.UI.setAttribute('dsp_shields_'..idx, 'color', state.shields.critcolor)
@@ -1043,18 +1048,22 @@ namespace handlers {
                 }
                 if ($input['SHIELDS']['LIMITMODE'] == 2) {
                     $cc = "local cur = state.shields.current[idx]
-                    local lim = state.shields.limit[idx]
+                    local min = state.shields.minimum[idx]
+                    local max = state.shields.maximum[idx]
                     local crt = state.shields.critical[idx]
-                    if (cur > lim) then cur = 0 end
-                    if (cur < 0) then cur = lim end
-                    lim = math.max(1, lim)
-                    crt = math.max(0, crt)
+                    max = math.max(min, max)
+                    min = math.min(max, min)
+                    crt = math.max(math.min(crit, max), min)
+                    if (cur > max) then cur = min end
+                    if (cur < min) then cur = max end
                     state.shields.current[idx] = cur
-                    state.shields.limit[idx] = lim
+                    state.shields.minimum[idx] = min
+                    state.shields.maximum[idx] = max
                     state.shields.critical[idx] = crt
                     self.UI.setAttribute('dsp_shields_'..idx, 'text', cur)
                     self.UI.setAttribute('inp_shields_current_'..idx, 'value', cur)
-                    self.UI.setAttribute('inp_shields_limit_'..idx, 'value', lim)
+                    self.UI.setAttribute('inp_shields_minimum_'..idx, 'value', min)
+                    self.UI.setAttribute('inp_shields_maximum_'..idx, 'value', max)
                     self.UI.setAttribute('inp_shields_critical_'..idx, 'value', crt)
                     if (cur <= crt) then
                         self.UI.setAttribute('dsp_shields_'..idx, 'color', state.shields.critcolor)
@@ -1065,17 +1074,20 @@ namespace handlers {
                 }
                 if ($input['SHIELDS']['LIMITMODE'] == 3) {
                     $cc = "local cur = state.shields.current[idx]
-                    local lim = state.shields.limit[idx]
+                    local max = state.shields.maximum[idx]
+                    local min = state.shields.minimum[idx]
                     local crt = state.shields.critical[idx]
-                    lim = math.max(1, lim)
-                    crt = math.max(0, crt)
-                    cur = math.max(0, cur)
+                    max = math.max(min, max)
+                    min = math.min(max, min)
+                    crt = math.max(math.min(crit, max), min)
                     state.shields.current[idx] = cur
-                    state.shields.limit[idx] = lim
+                    state.shields.minimum[idx] = min
+                    state.shields.maximum[idx] = max
                     state.shields.critical[idx] = crt
                     self.UI.setAttribute('dsp_shields_'..idx, 'text', cur)
                     self.UI.setAttribute('inp_shields_current_'..idx, 'text', cur)
-                    self.UI.setAttribute('inp_shields_limit_'..idx, 'text', lim)
+                    self.UI.setAttribute('inp_shields_minimum_'..idx, 'text', min)
+                    self.UI.setAttribute('inp_shields_maximum_'..idx, 'text', max)
                     self.UI.setAttribute('inp_shields_critical_'..idx, 'text', crt)
                     if (cur <= crt) then
                         self.UI.setAttribute('dsp_shields_'..idx, 'color', state.shields.critcolor)
@@ -1104,11 +1116,15 @@ namespace handlers {
                         self.UI.setAttribute('inp_shields_critcolor', 'text', data.critcolor)
                         state.shields.critcolor = data.critcolor
                     end
-                    if (data.current ~= nil or data.limit ~= nil or data.critical ~= nil) then
-                        local index = tonumber(data.index or error('index is required when modifying shield direction values current, limit, or critical', 2)) or error('index must be numeric', 2)
-                        if (data.limit ~= nil) then
-                            local c = tonumber(data.limit) or error('limit must be numeric')
-                            state.shields.limit[index] = c
+                    if (data.current ~= nil or data.minimum ~= nil or data.maximum ~= nil or data.critical ~= nil) then
+                        local index = tonumber(data.index or error('index is required when modifying shield direction values current, maximum, minimumum, or critical', 2)) or error('index must be numeric', 2)
+                        if (data.maximum ~= nil) then
+                            local c = tonumber(data.maximum) or error('maximum must be numeric')
+                            state.shields.maximum[index] = c
+                        end
+                        if (data.minimum ~= nil) then
+                            local c = tonumber(data.minimum) or error('minimum must be numeric')
+                            state.shields.minimum[index] = c
                         end
                         if (data.critical ~= nil) then
                             local c = tonumber(data.critical) or error('critical must be numeric')
@@ -1138,8 +1154,8 @@ namespace handlers {
                         table.insert(args,a)
                     end
                     local key = args[3]
-                    if (key == 'current' or key == 'limit' or key == 'critical') then
-                        local index = tonumber(args[4]) or error('index is required when modifying current, limit, or critical')
+                    if (key == 'current' or key == 'maximum' or key == 'minimum' or key == 'critical') then
+                        local index = tonumber(args[4]) or error('index is required when modifying current, minimum, maximum, or critical')
                         editShields({index=index, [key] = value})
                     end
                     if (key == 'color') then
@@ -1499,19 +1515,22 @@ namespace handlers {
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Direction'}}}},
                             {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Value'}}}},
-                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Limit'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Minimum'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Maximum'}}}},
                             {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Critical'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Front'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=state.shields.current[1], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_1', text=state.shields.limit[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_1', text=state.shields.minimum[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_1', text=state.shields.maximum[1], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=state.shields.critical[1], onEndEdit = 'ui_editshields'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Back'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=state.shields.current[2], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_2', text=state.shields.limit[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_2', text=state.shields.minimum[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_2', text=state.shields.maximum[2], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=state.shields.critical[2], onEndEdit = 'ui_editshields'}}}},
                         }},
                     }}";
@@ -1521,19 +1540,22 @@ namespace handlers {
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Direction'}}}},
                             {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Value'}}}},
-                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Limit'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Minimum'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Maximum'}}}},
                             {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Critical'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Left'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=state.shields.current[1], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_1', text=state.shields.limit[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_1', text=state.shields.minimum[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_1', text=state.shields.maximum[1], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=state.shields.critical[1], onEndEdit = 'ui_editshields'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Right'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=state.shields.current[2], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_2', text=state.shields.limit[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_2', text=state.shields.minimum[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_2', text=state.shields.maximum[2], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=state.shields.critical[2], onEndEdit = 'ui_editshields'}}}},
                         }},
                     }}";
@@ -1543,31 +1565,36 @@ namespace handlers {
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Direction'}}}},
                             {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Value'}}}},
-                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Limit'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Minimum'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Maximum'}}}},
                             {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Critical'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Front'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=state.shields.current[1], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_1', text=state.shields.limit[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_1', text=state.shields.minimum[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_1', text=state.shields.maximum[1], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=state.shields.critical[1], onEndEdit = 'ui_editshields'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Left'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=state.shields.current[2], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_2', text=state.shields.limit[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_2', text=state.shields.minimum[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_2', text=state.shields.maximum[2], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=state.shields.critical[2], onEndEdit = 'ui_editshields'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Right'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_3', text=state.shields.current[3], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_3', text=state.shields.limit[3], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_3', text=state.shields.minimum[3], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_3', text=state.shields.maximum[3], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_3', text=state.shields.critical[3], onEndEdit = 'ui_editshields'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Back'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_4', text=state.shields.current[4], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_4', text=state.shields.limit[4], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_4', text=state.shields.minimum[4], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_4', text=state.shields.maximum[4], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_4', text=state.shields.critical[4], onEndEdit = 'ui_editshields'}}}},
                         }},
                     }}";
@@ -1577,43 +1604,50 @@ namespace handlers {
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Direction'}}}},
                             {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Value'}}}},
-                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Limit'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Minimum'}}}},
+                            {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Maximum'}}}},
                             {tag='cell', children={{tag='text', attributes={color='white', alignment='MiddleCenter', text='Critical'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Front'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=state.shields.current[1], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_1', text=state.shields.limit[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_1', text=state.shields.minimum[1], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_1', text=state.shields.maximum[1], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=state.shields.critical[1], onEndEdit = 'ui_editshields'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Front Left'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=state.shields.current[2], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_2', text=state.shields.limit[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_2', text=state.shields.minimum[2], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_2', text=state.shields.maximum[2], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=state.shields.critical[2], onEndEdit = 'ui_editshields'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Front Right'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_3', text=state.shields.current[3], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_3', text=state.shields.limit[3], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_3', text=state.shields.minimum[3], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_3', text=state.shields.maximum[3], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_3', text=state.shields.critical[3], onEndEdit = 'ui_editshields'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Back Left'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_4', text=state.shields.current[4], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_4', text=state.shields.limit[4], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_4', text=state.shields.minimum[4], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_4', text=state.shields.maximum[4], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_4', text=state.shields.critical[4], onEndEdit = 'ui_editshields'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Back Right'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_5', text=state.shields.current[5], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_5', text=state.shields.limit[5], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_5', text=state.shields.minimum[5], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_5', text=state.shields.maximum[5], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_5', text=state.shields.critical[5], onEndEdit = 'ui_editshields'}}}},
                         }},
                         {tag='row', children={
                             {tag='cell', children={{tag='text', attributes={color='white', text='Back'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_6', text=state.shields.current[6], onEndEdit = 'ui_editshields'}}}},
-                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_6', text=state.shields.limit[6], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_6', text=state.shields.minimum[6], onEndEdit = 'ui_editshields'}}}},
+                            {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_6', text=state.shields.maximum[6], onEndEdit = 'ui_editshields'}}}},
                             {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_6', text=state.shields.critical[6], onEndEdit = 'ui_editshields'}}}},
                         }},
                     }}";
@@ -1675,7 +1709,7 @@ namespace handlers {
 
 
         	//OVERHEAD!
-        	$res .= "local ui_overhead = { tag='Panel', attributes={childForceExpandHeight='false',visibility=PERMVIEW,position='0 0 ".($input['OVERHEAD_HEIGHT'] * -100)."',rotation=orient=='HORIZONTAL'and'0 0 0'or'-90 0 0',active=ui_mode=='0',scale='".($input['UI_SCALE'])." ".($input['UI_SCALE'])." ".($input['UI_SCALE'])."',height=0,color='red',width=w},
+        	$res .= "local ui_overhead = { tag='Panel', attributes={childForceExpandHeight='false',visibility=PERMVIEW,position='0 ".($input['OVERHEAD_OFFSET'] * -100)." ".($input['OVERHEAD_HEIGHT'] * -100)."',rotation=orient=='HORIZONTAL'and'0 0 0'or'-90 0 0',active=ui_mode=='0',scale='".($input['UI_SCALE'])." ".($input['UI_SCALE'])." ".($input['UI_SCALE'])."',height=0,color='red',width=w},
         			children={
         				{tag='VerticalLayout',attributes={rectAlignment='LowerCenter',childAlignment='LowerCenter',childForceExpandHeight=false,childForceExpandWidth=true,height='5000',spacing='5'},
         					children={".implode(",", $mainChildren)."}
@@ -1686,7 +1720,7 @@ namespace handlers {
         	//SETTINGS!
         	if (!empty($settingsChildren)) {
         		$settingsChildren[] = "{tag='button', attributes={height='40', width='40', rectAlignment='LowerCenter', image='ui_close', offsetXY='0 0', colors='#ccccccff|#ffffffff|#404040ff|#808080ff', onClick='ui_setmode(0)'}}";
-        		$res .= "local ui_settings = {tag='panel', attributes={id='ui_settings',height='0',width=640,position='0 0 ".($input['OVERHEAD_HEIGHT'] * -100)."',rotation=(orient=='HORIZONTAL'and'0 0 0'or'-90 0 0'),scale='".$input['UI_SCALE']." ".$input['UI_SCALE']." ".$input['UI_SCALE']."',active=(ui_mode ~= '0'),visibility=PERMEDIT},
+        		$res .= "local ui_settings = {tag='panel', attributes={id='ui_settings',height='0',width=640,position='0 ".($input['OVERHEAD_OFFSET'] * -100)." ".($input['OVERHEAD_HEIGHT'] * -100)."',rotation=(orient=='HORIZONTAL'and'0 0 0'or'-90 0 0'),scale='".$input['UI_SCALE']." ".$input['UI_SCALE']." ".$input['UI_SCALE']."',active=(ui_mode ~= '0'),visibility=PERMEDIT},
         			children={".implode(",", $settingsChildren)."}
         		}\n";
         	} else {

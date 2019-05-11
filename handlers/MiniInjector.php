@@ -107,7 +107,8 @@ local currentconfig = {
     SHIELDS = {
         SHAPE = 1,
         CURRENT = {6,6,6,6,6,6},
-        LIMIT = {6,6,6,6,6,6},
+        MAXIMUM = {6,6,6,6,6,6},
+        MINIMUM = {0,0,0,0,0,0},
         CRITICAL = {1,1,1,1,1,1},
         COLOR = '#1f87ff',
         UIHEIGHT = 0.25,
@@ -288,22 +289,26 @@ function getInjectionState()
         toInject.shields = {}
         if (currentconfig.SHIELDS.SHAPE == const.SHIELD_FRONTBACK) then
             toInject.shields.current = {table.unpack(currentconfig.SHIELDS.CURRENT, 1, 2)}
-            toInject.shields.limit = {table.unpack(currentconfig.SHIELDS.LIMIT, 1, 2)}
+            toInject.shields.maximum = {table.unpack(currentconfig.SHIELDS.MAXIMUM, 1, 2)}
+            toInject.shields.minimum = {table.unpack(currentconfig.SHIELDS.MINIMUM, 1, 2)}
             toInject.shields.critical = {table.unpack(currentconfig.SHIELDS.CRITICAL, 1, 2)}
         end
         if (currentconfig.SHIELDS.SHAPE == const.SHIELD_LEFTRIGHT) then
             toInject.shields.current = {table.unpack(currentconfig.SHIELDS.CURRENT, 1, 2)}
-            toInject.shields.limit = {table.unpack(currentconfig.SHIELDS.LIMIT, 1, 2)}
+            toInject.shields.maximum = {table.unpack(currentconfig.SHIELDS.MAXIMUM, 1, 2)}
+            toInject.shields.minimum = {table.unpack(currentconfig.SHIELDS.MINIMUM, 1, 2)}
             toInject.shields.critical = {table.unpack(currentconfig.SHIELDS.CRITICAL, 1, 2)}
         end
         if (currentconfig.SHIELDS.SHAPE == const.SHIELD_FOURWAY) then
             toInject.shields.current = {table.unpack(currentconfig.SHIELDS.CURRENT, 1, 4)}
-            toInject.shields.limit = {table.unpack(currentconfig.SHIELDS.LIMIT, 1, 4)}
+            toInject.shields.maximum = {table.unpack(currentconfig.SHIELDS.MAXIMUM, 1, 4)}
+            toInject.shields.minimum = {table.unpack(currentconfig.SHIELDS.MINIMUM, 1, 4)}
             toInject.shields.critical = {table.unpack(currentconfig.SHIELDS.CRITICAL, 1, 4)}
         end
         if (currentconfig.SHIELDS.SHAPE == const.SHIELD_SIXWAY) then
             toInject.shields.current = {table.unpack(currentconfig.SHIELDS.CURRENT, 1, 6)}
-            toInject.shields.limit = {table.unpack(currentconfig.SHIELDS.LIMIT, 1, 6)}
+            toInject.shields.maximum = {table.unpack(currentconfig.SHIELDS.MAXIMUM, 1, 6)}
+            toInject.shields.minimum = {table.unpack(currentconfig.SHIELDS.MINIMUM, 1, 6)}
             toInject.shields.critical = {table.unpack(currentconfig.SHIELDS.CRITICAL, 1, 6)}
         end
         toInject.shields.color = currentconfig.SHIELDS.COLOR
@@ -860,8 +865,8 @@ function ui_editshields(player, value, id)
         table.insert(args,a)
     end
     local key = args[3]
-    if (key == 'current' or key == 'limit' or key == 'critical') then
-        local index = tonumber(args[4]) or error('index is required when modifying current, limit, or critical')
+    if (key == 'current' or key == 'maximum' or key == 'critical' or key == 'minimum') then
+        local index = tonumber(args[4]) or error('index is required when modifying current, minimum, maximum, or critical')
         local n = tonumber(value)
         if (n ~= nil) then
             currentconfig.SHIELDS[string.upper(key)][index] = n
@@ -1815,19 +1820,22 @@ function rebuildUI()
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Direction'}}}},
                         {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Value'}}}},
-                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Limit'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Minimum'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Maximum'}}}},
                         {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Critical'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Front'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=currentconfig.SHIELDS.CURRENT[1], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_1', text=currentconfig.SHIELDS.LIMIT[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_1', text=currentconfig.SHIELDS.MINIMUM[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_1', text=currentconfig.SHIELDS.MAXIMUM[1], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=currentconfig.SHIELDS.CRITICAL[1], onEndEdit = 'ui_editshields'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Back'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=currentconfig.SHIELDS.CURRENT[2], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_2', text=currentconfig.SHIELDS.LIMIT[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_2', text=currentconfig.SHIELDS.MINIMUM[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_2', text=currentconfig.SHIELDS.MAXIMUM[2], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=currentconfig.SHIELDS.CRITICAL[2], onEndEdit = 'ui_editshields'}}}},
                     }},
                 }}
@@ -1837,19 +1845,22 @@ function rebuildUI()
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Direction'}}}},
                         {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Value'}}}},
-                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Limit'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Minimum'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Maximum'}}}},
                         {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Critical'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Left'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=currentconfig.SHIELDS.CURRENT[1], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_1', text=currentconfig.SHIELDS.LIMIT[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_1', text=currentconfig.SHIELDS.MINIMUM[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_1', text=currentconfig.SHIELDS.MAXIMUM[1], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=currentconfig.SHIELDS.CRITICAL[1], onEndEdit = 'ui_editshields'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Right'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=currentconfig.SHIELDS.CURRENT[2], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_2', text=currentconfig.SHIELDS.LIMIT[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_2', text=currentconfig.SHIELDS.MINIMUM[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_2', text=currentconfig.SHIELDS.MAXIMUM[2], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=currentconfig.SHIELDS.CRITICAL[2], onEndEdit = 'ui_editshields'}}}},
                     }},
                 }}
@@ -1859,31 +1870,36 @@ function rebuildUI()
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Direction'}}}},
                         {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Value'}}}},
-                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Limit'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Minimum'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Maximum'}}}},
                         {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Critical'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Front'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=currentconfig.SHIELDS.CURRENT[1], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_1', text=currentconfig.SHIELDS.LIMIT[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_1', text=currentconfig.SHIELDS.MINIMUM[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_1', text=currentconfig.SHIELDS.MAXIMUM[1], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=currentconfig.SHIELDS.CRITICAL[1], onEndEdit = 'ui_editshields'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Left'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=currentconfig.SHIELDS.CURRENT[2], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_2', text=currentconfig.SHIELDS.LIMIT[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_2', text=currentconfig.SHIELDS.MINIMUM[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_2', text=currentconfig.SHIELDS.MAXIMUM[2], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=currentconfig.SHIELDS.CRITICAL[2], onEndEdit = 'ui_editshields'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Right'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_3', text=currentconfig.SHIELDS.CURRENT[3], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_3', text=currentconfig.SHIELDS.LIMIT[3], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_3', text=currentconfig.SHIELDS.MINIMUM[3], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_3', text=currentconfig.SHIELDS.MAXIMUM[3], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_3', text=currentconfig.SHIELDS.CRITICAL[3], onEndEdit = 'ui_editshields'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Back'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_4', text=currentconfig.SHIELDS.CURRENT[4], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_4', text=currentconfig.SHIELDS.LIMIT[4], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_4', text=currentconfig.SHIELDS.MINIMUM[4], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_4', text=currentconfig.SHIELDS.MAXIMUM[4], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_4', text=currentconfig.SHIELDS.CRITICAL[4], onEndEdit = 'ui_editshields'}}}},
                     }},
                 }}
@@ -1893,43 +1909,50 @@ function rebuildUI()
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Direction'}}}},
                         {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Value'}}}},
-                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Limit'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Minimum'}}}},
+                        {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Maximum'}}}},
                         {tag='cell', children={{tag='text', attributes={alignment='MiddleCenter', text='Critical'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Front'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_1', text=currentconfig.SHIELDS.CURRENT[1], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_1', text=currentconfig.SHIELDS.LIMIT[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_1', text=currentconfig.SHIELDS.MINIMUM[1], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_1', text=currentconfig.SHIELDS.MAXIMUM[1], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_1', text=currentconfig.SHIELDS.CRITICAL[1], onEndEdit = 'ui_editshields'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Front Left'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_2', text=currentconfig.SHIELDS.CURRENT[2], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_2', text=currentconfig.SHIELDS.LIMIT[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_2', text=currentconfig.SHIELDS.MINIMUM[2], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_2', text=currentconfig.SHIELDS.MAXIMUM[2], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_2', text=currentconfig.SHIELDS.CRITICAL[2], onEndEdit = 'ui_editshields'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Front Right'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_3', text=currentconfig.SHIELDS.CURRENT[3], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_3', text=currentconfig.SHIELDS.LIMIT[3], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_3', text=currentconfig.SHIELDS.MINIMUM[3], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_3', text=currentconfig.SHIELDS.MAXIMUM[3], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_3', text=currentconfig.SHIELDS.CRITICAL[3], onEndEdit = 'ui_editshields'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Back Left'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_4', text=currentconfig.SHIELDS.CURRENT[4], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_4', text=currentconfig.SHIELDS.LIMIT[4], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_4', text=currentconfig.SHIELDS.MINIMUM[4], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_4', text=currentconfig.SHIELDS.MAXIMUM[4], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_4', text=currentconfig.SHIELDS.CRITICAL[4], onEndEdit = 'ui_editshields'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Back Right'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_5', text=currentconfig.SHIELDS.CURRENT[5], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_5', text=currentconfig.SHIELDS.LIMIT[5], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_5', text=currentconfig.SHIELDS.MINIMUM[5], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_5', text=currentconfig.SHIELDS.MAXIMUM[5], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_5', text=currentconfig.SHIELDS.CRITICAL[5], onEndEdit = 'ui_editshields'}}}},
                     }},
                     {tag='row', children={
                         {tag='cell', children={{tag='text', attributes={text='Back'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_current_6', text=currentconfig.SHIELDS.CURRENT[6], onEndEdit = 'ui_editshields'}}}},
-                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_limit_6', text=currentconfig.SHIELDS.LIMIT[6], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_minimum_6', text=currentconfig.SHIELDS.MINIMUM[6], onEndEdit = 'ui_editshields'}}}},
+                        {tag='cell', children={{tag='InputField', attributes={id='inp_shields_maximum_6', text=currentconfig.SHIELDS.MAXIMUM[6], onEndEdit = 'ui_editshields'}}}},
                         {tag='cell', children={{tag='InputField', attributes={id='inp_shields_critical_6', text=currentconfig.SHIELDS.CRITICAL[6], onEndEdit = 'ui_editshields'}}}},
                     }},
                 }}
